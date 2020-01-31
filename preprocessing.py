@@ -72,7 +72,7 @@ class processor:
         test = np.reshape(test, (-1,2))
 
         # Testing reduce scope
-        # train = train[0:100, 0:100]
-        # test = test[0:100, 0:100]
+        train = train[0:300000, 0:300000]
+        test = test[0:300000, 0:300000]
 
         return train[:,0], train[:,1], test[:,0], test[:,1]

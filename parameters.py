@@ -18,24 +18,25 @@ embed_size = 512
 epochs = 262
 
 max_question_length = 160  # characters
-max_answer_length = 30
+max_answer_length = 8
+
+# max_answer_length = 30
 
 # Lexicon and embedding init
 vocab = list(string.punctuation + string.ascii_letters + string.digits) + [" ", "\t", "\n"]
-num_oov_buckets = 1
-vocab_size = len(vocab) + num_oov_buckets
+vocab_size = len(vocab)
 
 vocab_table = dict(
     [(char, i) for i, char in enumerate(vocab)])
 
 
 # category index mapping
-table_init = \
-    tf.lookup.KeyValueTensorInitializer(vocab,
-                                        tf.range(len(vocab),
-                                                 dtype=tf.int64))
+# table_init = \
+#     tf.lookup.KeyValueTensorInitializer(vocab,
+#                                         tf.range(len(vocab),
+#                                                  dtype=tf.int64))
 
-table = tf.lookup.StaticVocabularyTable(table_init, num_oov_buckets)
+# table = tf.lookup.StaticVocabularyTable(table_init, num_oov_buckets)
 
 
 # Misc Parameters

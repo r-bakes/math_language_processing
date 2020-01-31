@@ -4,13 +4,16 @@ from tensorflow import keras
 import parameters as p
 from preprocessing import processor
 from network_debugging import plot_history
-import pdb
+import definitions
+import os
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 processor = processor()
 train_x, train_y, test_x, test_y = processor.get_data()
 encoder_input_data, decoder_input_data, decoder_target_data = processor.encode_decode_preprocess([train_x, train_y])
 
-latent_dim = 256
+latent_dim = p.hidden_size
 num_decoder_tokens = p.vocab_size
 num_encoder_tokens = p.vocab_size
 
@@ -38,13 +41,15 @@ model = keras.models.Model([encoder_inputs, decoder_inputs], decoder_outputs)
 # Run training
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy',
               metrics=['accuracy'])
-history = model.fit([encoder_input_data, decoder_input_data], decoder_target_data,
-          batch_size=64,
-          epochs=20,
-          validation_split=0.2)
+history = model.fit([encoder_input_data, decoder_input_data],
+                    decoder_target_data,
+                    batch_size=64,
+                    epochs=100,
+                    validation_split=0.2)
 
+interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encode_decode_preprocess([test_x, test_y])
 interpolate_accuracy = model.evaluate([encoder_input_data, decoder_input_data], decoder_target_data)
-print(f'\n\nTrain Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
+print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
 
 # Define sampling models
 encoder_model = keras.models.Model(encoder_inputs, encoder_states)
@@ -63,7 +68,15 @@ decoder_model = keras.models.Model(
 reverse_target_char_index = dict(
     (i, char) for char, i in p.vocab_table.items())
 
-print(reverse_target_char_index)
+# model_version = '001'
+
+# model_name = "encoder_model"
+# model_path = os.path.join(definitions.ROOT_DIR, "saved_models/encoder_decoder_lstm", model_name+'_'+model_version)
+# encoder_model.save(model_path)
+#
+# model_name = "decoder_model"
+# model_path = os.path.join(definitions.ROOT_DIR, "saved_models/encoder_decoder_lstm", model_name+'_'+model_version)
+# decoder_model.save(model_path)
 
 def decode_sequence(input_seq):
     # Encode the input as state vectors.
@@ -85,10 +98,7 @@ def decode_sequence(input_seq):
 
         # Sample a token
         sampled_token_index = np.argmax(output_tokens[0, -1, :])
-        print("token index:", repr(sampled_token_index))
-        print("char:", repr(reverse_target_char_index[sampled_token_index]))
         sampled_char = reverse_target_char_index[sampled_token_index]
-        print("char:", repr(sampled_char))
         decoded_sentence += sampled_char
 
         # Exit condition: either hit max length
@@ -105,18 +115,30 @@ def decode_sequence(input_seq):
         states_value = [h, c]
     return decoded_sentence
 
-plot_history(history)
+# plot_history(history)
 
-pdb.set_trace()
-
-for seq_index in range(10):
+input_sentences=[]
+input_targets=[]
+decoded_sentences=[]
+for seq_index in range(100):
     # Take one sequence (part of the training set)
     # for trying out decoding.
+
     input_seq = encoder_input_data[seq_index: seq_index + 1]  # inputs 1, 160, 98 matrix
     decoded_sentence = decode_sequence(input_seq)
+
+    input_sentences.append(repr(train_x[seq_index]))
+    input_targets.append(repr(train_y[seq_index]))
+    decoded_sentences.append(decoded_sentence)
 
     print('-')
     print(f'Input sentence: {repr(train_x[seq_index]), repr(train_y[seq_index])}')
     print(f'Decoded sentence: {repr(decoded_sentence)}')
 
+dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_001.txt")
+with open(dir_results, 'w') as file:
+    file.write(f'Train Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
 
+    for input_sentence,input_target,decoded_sentence in zip(input_sentences, input_targets, decoded_sentences):
+        file.write(f'Input: {input_sentence} | {input_target}\n\t{repr(decoded_sentence)}\n')
+    file.close()

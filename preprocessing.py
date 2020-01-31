@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import parameters as p
+import definitions
 
 import os
 import pdb
@@ -9,8 +10,8 @@ import pdb
 
 class processor:
 
-    dir_train_data = r"C:\Users\bakes\OneDrive - The Pennsylvania State University\devops\repos\thesis_math_language_processing\data\train-easy\algebra__linear_1d.txt"
-    dir_test_data = r"C:\Users\bakes\OneDrive - The Pennsylvania State University\devops\repos\thesis_math_language_processing\data\interpolate\algebra__linear_1d.txt"
+    dir_data = os.path.join(definitions.ROOT_DIR, "data")
+    question_type = "algebra__linear_1d.txt"
 
     def __init__(self):
         self.tokenizer = keras.preprocessing.text.Tokenizer(char_level=True, lower=False)
@@ -31,8 +32,6 @@ class processor:
 
         target_texts = np.char.add(np.full(shape=len(target_texts), fill_value='\t'), target_texts)
         target_texts = np.char.add(target_texts, np.full(shape=len(target_texts), fill_value='\n'))
-        print(target_texts)
-
 
         encoder_input_data = np.zeros(
             (len(input_texts), max_encoder_seq_length, num_encoder_tokens),
@@ -61,37 +60,19 @@ class processor:
         return encoder_input_data, decoder_input_data, decoder_target_data
 
     def get_data(self):
-        train = open(self.dir_train_data, 'r').read().splitlines()
-        test = open(self.dir_test_data, 'r').read().splitlines()
+        train_easy = open(os.path.join(self.dir_data,r"train-easy", self.question_type), 'r').read().splitlines()
+        train_medium = open(os.path.join(self.dir_data,r"train-medium",self.question_type), 'r').read().splitlines()
+        train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
+        test = open(os.path.join(self.dir_data, r"interpolate", self.question_type), 'r').read().splitlines()
 
-        train = np.reshape(train, (-1, 2))
-        test = np.reshape(test, (-1, 2))
+        train_easy, train_medium, train_hard = np.reshape(train_easy, (-1, 2)), np.reshape(train_medium, (-1, 2)), np.reshape(train_hard, (-1, 2))
+        train = np.concatenate((train_easy, train_medium, train_hard), axis=0)
+        np.random.shuffle(train)  # Shuffle data
 
-        train = train[0:100, 0:100]  # Testing reduce scope
-        test = test[0:100, 0:100]
+        test = np.reshape(test, (-1,2))
+
+        # Testing reduce scope
+        # train = train[0:100, 0:100]
+        # test = test[0:100, 0:100]
 
         return train[:,0], train[:,1], test[:,0], test[:,1]
-
-    # def postprocess(self, y_pred):
-    #
-    #     print(self.tokenizer.sequences_to_texts(y_pred[0]))
-    #     print(self.tokenizer.sequences_to_texts(y_pred[0])[0])
-
-
-
-
-# processer = processer()
-# test_x, test_y, train_x, train_y = processer.get_data()
-#
-#
-# # print(test[0,0])
-# test_x = processer.preprocess(test_x)
-# # print(test[:,0])
-# print(len(test_x[0,0]))
-# print(test_x.shape)
-# print(test_x[0].shape)
-# print(test_x[0,0])
-# # print(test[1,:])
-# # test = test.reshape(1,:,1)
-# print(test_x)
-

@@ -59,7 +59,7 @@ class processor:
 
         return encoder_input_data, decoder_input_data, decoder_target_data
 
-    def get_data(self):
+    def get_data(self, n_data):
         train_easy = open(os.path.join(self.dir_data,r"train-easy", self.question_type), 'r').read().splitlines()
         train_medium = open(os.path.join(self.dir_data,r"train-medium",self.question_type), 'r').read().splitlines()
         train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
@@ -72,7 +72,7 @@ class processor:
         test = np.reshape(test, (-1,2))
 
         # Testing reduce scope
-        train = train[0:300000, 0:300000]
-        test = test[0:300000, 0:300000]
+        train = train[0:n_data, 0:n_data]
+        test = test[0:n_data, 0:n_data]
 
         return train[:,0], train[:,1], test[:,0], test[:,1]

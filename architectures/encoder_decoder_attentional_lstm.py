@@ -10,8 +10,9 @@ import definitions
 
 class EncoderDecoderLSTM:
 
-    def __init__(self, n_train):
+    def __init__(self, n_train, n_epochs):
         self.n_train = n_train
+        self.n_epochs = n_epochs
 
     def decode_sequence(self, input_seq, encoder_model, decoder_model, num_decoder_tokens):
         reverse_target_char_index = dict(
@@ -89,7 +90,7 @@ class EncoderDecoderLSTM:
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
-                            epochs=50,
+                            epochs=self.n_epochs,
                             validation_split=0.2)
 
         interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encode_decode_preprocess([test_x, test_y])

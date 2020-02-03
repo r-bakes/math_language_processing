@@ -55,6 +55,8 @@ class EncoderDecoderLSTM:
         return decoded_sentence
 
     def train(self):
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
+
         processor = preprocessing.processor()
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
         encoder_input_data, decoder_input_data, decoder_target_data = processor.encode_decode_preprocess([train_x, train_y])
@@ -85,13 +87,16 @@ class EncoderDecoderLSTM:
         model = keras.models.Model([encoder_inputs, decoder_inputs], decoder_outputs)
 
         # Run training
-        model.compile(optimizer='rmsprop', loss='categorical_crossentropy',
+        model.compile(optimizer='adam', loss='categorical_crossentropy',
                       metrics=['accuracy'])
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
                             epochs=self.n_epochs,
+                            callbacks=[tensorboard_callback],
                             validation_split=0.2)
+
+        model.summary()
 
         interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encode_decode_preprocess([test_x, test_y])
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
@@ -112,6 +117,7 @@ class EncoderDecoderLSTM:
         decoder_model = keras.models.Model(
             [decoder_inputs] + decoder_states_inputs,
             [decoder_outputs] + decoder_states)
+
 
         input_sentences = []
         input_targets = []

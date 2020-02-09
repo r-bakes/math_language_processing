@@ -94,6 +94,7 @@ class Test:
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
+                            steps_per_epoch=self.n_train//64,
                             epochs=self.n_epochs,
                             callbacks=[tensorboard_callback],
                             validation_split=0.2)
@@ -129,7 +130,7 @@ class Test:
             # for trying out decoding.
             input_seq = encoder_input_data[seq_index]  # inputs 160,  matrix
             pdb.set_trace()
-            decoded_sentence = self.decode_sequence(input_seq.astype(np.float), encoder_model, decoder_model, num_decoder_tokens)
+            decoded_sentence = self.decode_sequence(input_seq, encoder_model, decoder_model, num_decoder_tokens)
 
             input_sentences.append(repr(train_x[seq_index]))
             input_targets.append(repr(train_y[seq_index]))

@@ -38,8 +38,7 @@ class Test:
 
             # Sample a token
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
-            # sampled_token_index = np.random.choice(, 1, p=output_tokens[0, -1, :])[0]
-
+            pdb.set_trace()
             sampled_char = reverse_target_char_index[sampled_token_index]
             decoded_sentence += sampled_char
 
@@ -50,8 +49,8 @@ class Test:
                 stop_condition = True
 
             # Update the target sequence (of length 1).
-            target_seq = np.zeros((1, 1, num_decoder_tokens))
-            target_seq[0, 0, sampled_token_index] = 1.
+            target_seq = np.zeros((160, num_decoder_tokens))
+            target_seq[0, sampled_token_index] = 1.
 
             # Update states
             states_value = [h, c]

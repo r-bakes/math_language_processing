@@ -98,14 +98,15 @@ class processor:
         train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
         test = open(os.path.join(self.dir_data, r"interpolate", self.question_type), 'r').read().splitlines()
 
-        train_easy, train_medium, train_hard = np.reshape(train_easy, (-1, 2)), np.reshape(train_medium, (-1, 2)), np.reshape(train_hard, (-1, 2))
-        train = np.concatenate((train_easy, train_medium, train_hard), axis=0)
-        np.random.shuffle(train)  # Shuffle data
+        # focus on easy for now
+        # train_medium, train_hard = np.reshape(train_medium, (-1, 2)), np.reshape(train_hard, (-1, 2))
+        train_easy = np.reshape(train_easy, (-1, 2))
+        test = np.reshape(test, (-1, 2))
 
-        test = np.reshape(test, (-1,2))
+        np.random.shuffle(train_easy)  # Shuffle data
 
         # Testing reduce scope
-        train = train[0:n_data, 0:n_data]
+        train = train_easy[0:n_data, 0:n_data]
         test = test[0:n_data, 0:n_data]
 
         return train[:,0], train[:,1], test[:,0], test[:,1]

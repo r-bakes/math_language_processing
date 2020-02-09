@@ -130,7 +130,6 @@ class Test:
             # Take one sequence (part of the training set)
             # for trying out decoding.
             input_seq = encoder_input_data[seq_index]  # inputs 160,  matrix
-            pdb.set_trace()
             decoded_sentence = self.decode_sequence(input_seq, encoder_model, decoder_model, num_decoder_tokens)
 
             input_sentences.append(repr(train_x[seq_index]))

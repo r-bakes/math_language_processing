@@ -38,7 +38,6 @@ class Test:
 
             # Sample a token
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
-            pdb.set_trace()
             sampled_char = reverse_target_char_index[sampled_token_index]
             decoded_sentence += sampled_char
 

@@ -69,14 +69,16 @@ class Test:
 
         # Embedding
         encoder_inputs = keras.layers.Input(shape=(None, ))
-        encoder_embedding = keras.layers.Embedding(num_encoder_tokens, num_encoder_tokens, mask_zero=True)(encoder_inputs)
+        encoder_masking = keras.layers.Masking(mask_value=0.0)
+        encoder_embedding = keras.layers.Embedding(num_encoder_tokens, num_encoder_tokens)(encoder_masking(encoder_inputs))
         x, state_h, state_c = keras.layers.LSTM(latent_dim, return_state=True)(encoder_embedding)
         # We discard `encoder_outputs` and only keep the states.
         encoder_states = [state_h, state_c]
 
         # Set up the decoder, using `encoder_states` as initial state.
         decoder_inputs = keras.layers.Input(shape=(None,))
-        decoder_embedding = keras.layers.Embedding(num_decoder_tokens, num_decoder_tokens, mask_zero=True)(decoder_inputs)
+        decoder_masking = keras.layers.Masking(mask_value=0.0)
+        decoder_embedding = keras.layers.Embedding(num_decoder_tokens, num_decoder_tokens)(decoder_masking(decoder_inputs))
         decoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, return_state=True)
         x, _, _ = decoder_lstm(decoder_embedding, initial_state=encoder_states)
         decoder_dense = keras.layers.Dense(num_decoder_tokens, activation='softmax')
@@ -94,7 +96,6 @@ class Test:
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
-                            steps_per_epoch=self.n_train//64,
                             epochs=self.n_epochs,
                             callbacks=[tensorboard_callback],
                             validation_split=0.2)

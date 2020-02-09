@@ -14,15 +14,48 @@ class processor:
     question_type = "algebra__linear_1d.txt"
 
     def __init__(self):
-        self.tokenizer = keras.preprocessing.text.Tokenizer(char_level=True, lower=False)
-        self.tokenizer.fit_on_texts(p.vocab)
+        pass
 
-    def preprocess(self, texts):
-        sequences = self.tokenizer.texts_to_sequences(texts)
-        sequences = keras.preprocessing.sequence.pad_sequences(sequences, maxlen=p.max_question_length, padding='pre', truncating='pre', value=0.0)
-        return tf.one_hot(sequences, p.vocab_size)
+    def preprocess_sequence(self, texts):
+        input_texts = np.array(texts[0])
+        target_texts = np.array(texts[1])
+        max_encoder_seq_length = p.max_question_length
+        max_decoder_seq_length = p.max_question_length
 
-    def encode_decode_preprocess(self, texts):
+        target_texts = np.char.add(np.full(shape=len(target_texts), fill_value='\t'), target_texts)
+        target_texts = np.char.add(target_texts, np.full(shape=len(target_texts), fill_value='\n'))
+
+        encoder_input_data = np.zeros(
+            (len(input_texts), max_encoder_seq_length),
+            dtype='float32')
+        decoder_input_data = np.zeros(
+            (len(input_texts), max_decoder_seq_length),
+            dtype='float32')
+        decoder_target_data = np.zeros(
+            (len(input_texts), max_decoder_seq_length),
+            dtype='float32')
+
+        for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
+            for t, char in enumerate(input_text):
+                encoder_input_data[i, t] = p.vocab_table[char]
+            for t, char in enumerate(target_text):
+                # decoder_target_data is ahead of decoder_input_data by one timestep
+                decoder_input_data[i, t] = p.vocab_table[char]
+                if t > 0:
+                    # decoder_target_data will be ahead by one timestep
+                    # and will not include the start character.
+                    decoder_target_data[i, t - 1] = p.vocab_table[char]
+
+        encoder_input_data =\
+            keras.preprocessing.sequence.pad_sequences(encoder_input_data, maxlen=p.max_question_length, padding='post', truncating='post', value=0.0)
+        decoder_target_data =\
+            keras.preprocessing.sequence.pad_sequences(decoder_target_data, maxlen=p.max_question_length, padding='post', truncating='post', value=0.0)
+        decoder_input_data =\
+            keras.preprocessing.sequence.pad_sequences(decoder_input_data, maxlen=p.max_question_length, padding='post', truncating='post', value=0.0)
+
+        return encoder_input_data, decoder_input_data, decoder_target_data
+
+    def encoder_decoder_preprocess(self, texts):
         input_texts = np.array(texts[0])
         target_texts = np.array(texts[1])
         max_encoder_seq_length = p.max_question_length

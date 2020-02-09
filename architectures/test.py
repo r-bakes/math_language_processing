@@ -1,15 +1,16 @@
 import tensorflow as tf
 import numpy as np
 import os
+import datetime
 from tensorflow import keras
 
 import parameters as p
 import preprocessing
 import network_debugging
-import definitions
 import pdb
+import definitions
 
-class EncoderDecoderLSTM:
+class Test:
 
     def __init__(self, n_train, n_epochs):
         self.n_train = n_train
@@ -21,22 +22,24 @@ class EncoderDecoderLSTM:
 
         # Encode the input as state vectors.
         states_value = encoder_model.predict(input_seq)
+
         # Generate empty target sequence of length 1.
-        target_seq = np.zeros((1, 1, num_decoder_tokens))
+        target_seq = np.zeros((160, num_decoder_tokens))
         # Populate the first character of target sequence with the start character.
-        target_seq[0, 0, p.vocab_table['\t']] = 1.
+        target_seq[0, p.vocab_table['\t']] = 1.
 
         # Sampling loop for a batch of sequences
         # (to simplify, here we assume a batch of size 1).
         stop_condition = False
         decoded_sentence = ''
-        pdb.set_trace()
         while not stop_condition:
             output_tokens, h, c = decoder_model.predict(
                 [target_seq] + states_value)
 
             # Sample a token
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
+            # sampled_token_index = np.random.choice(, 1, p=output_tokens[0, -1, :])[0]
+
             sampled_char = reverse_target_char_index[sampled_token_index]
             decoded_sentence += sampled_char
 
@@ -59,37 +62,37 @@ class EncoderDecoderLSTM:
 
         processor = preprocessing.processor()
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
-        encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_preprocess([train_x, train_y])
+        encoder_input_data, decoder_input_data, decoder_target_data = processor.preprocess_sequence([train_x, train_y])
+        decoder_target_data = tf.one_hot(decoder_target_data, p.vocab_size+1)
 
         latent_dim = p.hidden_size
-        num_decoder_tokens = p.vocab_size
-        num_encoder_tokens = p.vocab_size
+        num_decoder_tokens = p.vocab_size + 1
+        num_encoder_tokens = p.vocab_size + 1
 
-        encoder_inputs = keras.layers.Input(shape=(None, num_encoder_tokens))
-        encoder = keras.layers.LSTM(latent_dim, return_state=True)
-        encoder_outputs, state_h, state_c = encoder(encoder_inputs)
+        # Embedding
+        encoder_inputs = keras.layers.Input(shape=(None, ))
+        encoder_embedding = keras.layers.Embedding(num_encoder_tokens, num_encoder_tokens, mask_zero=True)(encoder_inputs)
+        x, state_h, state_c = keras.layers.LSTM(latent_dim, return_state=True)(encoder_embedding)
         # We discard `encoder_outputs` and only keep the states.
         encoder_states = [state_h, state_c]
 
         # Set up the decoder, using `encoder_states` as initial state.
-        decoder_inputs = keras.layers.Input(shape=(None, num_decoder_tokens))
-        # We set up our decoder to return full output sequences,
-        # and to return internal states as well. We don't use the
-        # return states in the training model, but we will use them in inference.
+        decoder_inputs = keras.layers.Input(shape=(None,))
+        decoder_embedding = keras.layers.Embedding(num_decoder_tokens, num_decoder_tokens, mask_zero=True)(decoder_inputs)
         decoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, return_state=True)
-        decoder_outputs, _, _ = decoder_lstm(decoder_inputs,
-                                             initial_state=encoder_states)
+        x, _, _ = decoder_lstm(decoder_embedding, initial_state=encoder_states)
         decoder_dense = keras.layers.Dense(num_decoder_tokens, activation='softmax')
-        decoder_outputs = decoder_dense(decoder_outputs)
+        decoder_outputs = decoder_dense(x)
 
         # Define the model that will turn
         # `encoder_input_data` & `decoder_input_data` into `decoder_target_data`
         model = keras.models.Model([encoder_inputs, decoder_inputs], decoder_outputs)
 
-        model.summary()
         # Run training
         model.compile(optimizer='adam', loss='categorical_crossentropy',
                       metrics=['accuracy'])
+        model.summary()
+
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
@@ -97,8 +100,8 @@ class EncoderDecoderLSTM:
                             callbacks=[tensorboard_callback],
                             validation_split=0.2)
 
-
-        interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_preprocess([test_x, test_y])
+        interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.preprocess_sequence([test_x, test_y])
+        interp_decoder_target_data = tf.one_hot(interp_decoder_target_data, p.vocab_size+1)
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
         print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
 
@@ -111,12 +114,14 @@ class EncoderDecoderLSTM:
         decoder_state_input_c = keras.layers.Input(shape=(latent_dim,))
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
         decoder_outputs, state_h, state_c = decoder_lstm(
-            decoder_inputs, initial_state=decoder_states_inputs)
+            decoder_embedding, initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
         decoder_outputs = decoder_dense(decoder_outputs)
+
         decoder_model = keras.models.Model(
             [decoder_inputs] + decoder_states_inputs,
             [decoder_outputs] + decoder_states)
+
 
         input_sentences = []
         input_targets = []
@@ -124,8 +129,7 @@ class EncoderDecoderLSTM:
         for seq_index in range(100):
             # Take one sequence (part of the training set)
             # for trying out decoding.
-
-            input_seq = encoder_input_data[seq_index: seq_index + 1]  # inputs 1, 160, 98 matrix
+            input_seq = encoder_input_data[seq_index]  # inputs 160,  matrix
             decoded_sentence = self.decode_sequence(input_seq, encoder_model, decoder_model, num_decoder_tokens)
 
             input_sentences.append(repr(train_x[seq_index]))
@@ -136,10 +140,10 @@ class EncoderDecoderLSTM:
             print(f'Input sentence: {repr(train_x[seq_index]), repr(train_y[seq_index])}')
             print(f'Decoded sentence: {repr(decoded_sentence)}')
 
-        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_001.txt")
+        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm", f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.txt")
 
         with open(dir_results, 'w') as file:
-            file.write(f'Train Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
+            file.write(f'Interpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
 
             for input_sentence, input_target, decoded_sentence in zip(input_sentences, input_targets,
                                                                       decoded_sentences):

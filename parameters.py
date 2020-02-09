@@ -18,16 +18,16 @@ embed_size = 512
 epochs = 262
 
 max_question_length = 160  # characters
-max_answer_length = 8
+max_answer_length = 32
 
 # max_answer_length = 30
 
 # Lexicon and embedding init
-vocab = list(string.punctuation + string.ascii_letters + string.digits) + [" ", "\t", "\n"]
+vocab = list(string.punctuation + string.ascii_letters + string.digits) + [" ", "\t", "\n", '&']
 vocab_size = len(vocab)
 
 vocab_table = dict(
-    [(char, i) for i, char in enumerate(vocab)])
+    [(char, i+1) for i, char in enumerate(vocab)])
 
 
 # category index mapping

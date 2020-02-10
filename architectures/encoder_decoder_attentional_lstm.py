@@ -115,7 +115,7 @@ class EncoderDecoderLSTM:
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
         # decoder_masking = keras.layers.Masking(mask_value=0.0)
         decoder_outputs, state_h, state_c = decoder_lstm(
-            decoder_inputs, initial_state=decoder_states_inputs)
+            decoder_masking(decoder_inputs), initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
         decoder_outputs = decoder_dense(decoder_outputs)
         decoder_model = keras.models.Model(

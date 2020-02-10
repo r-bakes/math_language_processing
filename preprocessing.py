@@ -11,7 +11,9 @@ import pdb
 class processor:
 
     dir_data = os.path.join(definitions.ROOT_DIR, "data")
-    question_type = "algebra__linear_1d.txt"
+    question_type = "arithmetic__add_or_sub.txt"
+    # arithmetic__add_or_sub.txt
+    # algebra__linear_1d.txt
 
     def __init__(self):
         pass

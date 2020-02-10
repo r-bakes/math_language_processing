@@ -141,7 +141,7 @@ class Test:
             print(f'Input sentence: {repr(train_x[seq_index]), repr(train_y[seq_index])}')
             print(f'Decoded sentence: {repr(decoded_sentence)}')
 
-        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm", f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.txt")
+        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_" + f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.txt")
 
         with open(dir_results, 'w') as file:
             file.write(f'Interpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')

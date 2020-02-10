@@ -30,7 +30,6 @@ class EncoderDecoderLSTM:
         # (to simplify, here we assume a batch of size 1).
         stop_condition = False
         decoded_sentence = ''
-        pdb.set_trace()
         while not stop_condition:
             output_tokens, h, c = decoder_model.predict(
                 [target_seq] + states_value)
@@ -66,18 +65,21 @@ class EncoderDecoderLSTM:
         num_encoder_tokens = p.vocab_size
 
         encoder_inputs = keras.layers.Input(shape=(None, num_encoder_tokens))
+        encoder_masking = keras.layers.Masking(mask_value=0.0)
         encoder = keras.layers.LSTM(latent_dim, return_state=True)
-        encoder_outputs, state_h, state_c = encoder(encoder_inputs)
+        encoder_outputs, state_h, state_c = encoder(encoder_masking(encoder_inputs))
         # We discard `encoder_outputs` and only keep the states.
         encoder_states = [state_h, state_c]
 
         # Set up the decoder, using `encoder_states` as initial state.
         decoder_inputs = keras.layers.Input(shape=(None, num_decoder_tokens))
+        decoder_masking = keras.layers.Masking(mask_value=0.0)
+
         # We set up our decoder to return full output sequences,
         # and to return internal states as well. We don't use the
         # return states in the training model, but we will use them in inference.
         decoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, return_state=True)
-        decoder_outputs, _, _ = decoder_lstm(decoder_inputs,
+        decoder_outputs, _, _ = decoder_lstm(decoder_masking(decoder_inputs),
                                              initial_state=encoder_states)
         decoder_dense = keras.layers.Dense(num_decoder_tokens, activation='softmax')
         decoder_outputs = decoder_dense(decoder_outputs)
@@ -105,11 +107,13 @@ class EncoderDecoderLSTM:
         # network_debugging.plot_history(history)
 
         # Define sampling models
+
         encoder_model = keras.models.Model(encoder_inputs, encoder_states)
 
         decoder_state_input_h = keras.layers.Input(shape=(latent_dim,))
         decoder_state_input_c = keras.layers.Input(shape=(latent_dim,))
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
+        # decoder_masking = keras.layers.Masking(mask_value=0.0)
         decoder_outputs, state_h, state_c = decoder_lstm(
             decoder_inputs, initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]

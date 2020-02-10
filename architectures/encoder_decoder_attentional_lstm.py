@@ -1,7 +1,8 @@
 import tensorflow as tf
+from tensorflow import keras
 import numpy as np
 import os
-from tensorflow import keras
+import datetime
 
 import parameters as p
 import preprocessing
@@ -90,7 +91,9 @@ class EncoderDecoderLSTM:
 
         model.summary()
         # Run training
-        model.compile(optimizer='adam', loss='categorical_crossentropy',
+        adam = keras.optimizers.Adam(learning_rate=p.learning_rate, beta_1=p.beta1, beta_2=p.beta2, amsgrad=False)
+
+        model.compile(optimizer=adam, loss='categorical_crossentropy',
                       metrics=['accuracy'])
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
@@ -140,7 +143,7 @@ class EncoderDecoderLSTM:
             print(f'Input sentence: {repr(train_x[seq_index]), repr(train_y[seq_index])}')
             print(f'Decoded sentence: {repr(decoded_sentence)}')
 
-        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_001.txt")
+        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_" + f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.txt")
 
         with open(dir_results, 'w') as file:
             file.write(f'Train Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')

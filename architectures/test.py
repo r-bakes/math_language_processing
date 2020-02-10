@@ -56,7 +56,7 @@ class Test:
         return decoded_sentence
 
     def train(self):
-        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
+        # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
 
         processor = preprocessing.processor()
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
@@ -88,8 +88,10 @@ class Test:
         # `encoder_input_data` & `decoder_input_data` into `decoder_target_data`
         model = keras.models.Model([encoder_inputs, decoder_inputs], decoder_outputs)
 
-        # Run training
-        model.compile(optimizer='adam', loss='categorical_crossentropy',
+        # Compile and train model
+        adam = keras.optimizers.Adam(learning_rate=p.learning_rate, beta_1=p.beta1, beta_2=p.beta2, amsgrad=False)
+
+        model.compile(optimizer=adam, loss='categorical_crossentropy',
                       metrics=['accuracy'])
         model.summary()
 
@@ -97,7 +99,6 @@ class Test:
                             decoder_target_data,
                             batch_size=64,
                             epochs=self.n_epochs,
-                            callbacks=[tensorboard_callback],
                             validation_split=0.2)
 
         interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.preprocess_sequence([test_x, test_y])

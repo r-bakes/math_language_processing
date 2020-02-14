@@ -11,14 +11,12 @@ import pdb
 class processor:
 
     dir_data = os.path.join(definitions.ROOT_DIR, "data")
-    question_type = "algebra__linear_1d.txt"
-    # arithmetic__add_or_sub.txt
-    # algebra__linear_1d.txt
 
-    def __init__(self):
-        pass
+    def __init__(self, q_type):
+        self.question_type = q_type
 
-    def preprocess_sequence(self, texts):
+
+    def encoder_decoder_sequence_preprocess(self, texts):
         input_texts = np.array(texts[0])
         target_texts = np.array(texts[1])
         max_encoder_seq_length = p.max_question_length
@@ -57,7 +55,7 @@ class processor:
 
         return encoder_input_data, decoder_input_data, decoder_target_data
 
-    def encoder_decoder_preprocess(self, texts):
+    def encoder_decoder_hot_preprocess(self, texts):
         input_texts = np.array(texts[0])
         target_texts = np.array(texts[1])
         max_encoder_seq_length = p.max_question_length

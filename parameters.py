@@ -14,31 +14,16 @@ epsilon = 10 ** -9
 optimizer = 'adam'  # Don't just use preconfigured adam, need to set custom beta/epsilon values
 abs_gradient_clipping = 0.1
 embed_size = 512
-
 epochs = 262
-
 max_question_length = 160  # characters
 max_answer_length = 32
 
-# max_answer_length = 30
+# Data
+q_list = [filename for filename in os.listdir(os.path.join(ROOT_DIR, r"data/train-easy")) if filename.endswith(".txt")]
+
 
 # Lexicon and embedding init
 vocab = ['<PAD>'] + list(string.punctuation + string.ascii_letters + string.digits + " " +"\t" + "\n")
 vocab_size = len(vocab)
 
 vocab_table = dict([(char, i) for i, char in enumerate(vocab)])
-
-
-# category index mapping
-# table_init = \
-#     tf.lookup.KeyValueTensorInitializer(vocab,
-#                                         tf.range(len(vocab),
-#                                                  dtype=tf.int64))
-
-# table = tf.lookup.StaticVocabularyTable(table_init, num_oov_buckets)
-
-
-# Misc Parameters
-train_path = r'data/mathematics_dataset-v1.0/train.txt'
-interpolate_path = r'data/mathematics_dataset-v1.0/interpolate_test.txt'
-extrapolate_path = r'data/mathematics_dataset-v1.0/extrapolate_test.txt'

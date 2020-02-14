@@ -12,9 +12,10 @@ import pdb
 
 class EncoderDecoderLSTM:
 
-    def __init__(self, n_train, n_epochs):
+    def __init__(self, n_train, n_epochs, q_type):
         self.n_train = n_train
         self.n_epochs = n_epochs
+        self.q_type = q_type
 
     def decode_sequence(self, input_seq, encoder_model, decoder_model, num_decoder_tokens):
         reverse_target_char_index = dict(
@@ -57,9 +58,9 @@ class EncoderDecoderLSTM:
     def train(self):
         tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
 
-        processor = preprocessing.processor()
+        processor = preprocessing.processor(self.q_type)
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
-        encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_preprocess([train_x, train_y])
+        encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_hot_preprocess([train_x, train_y])
 
         latent_dim = p.hidden_size
         num_decoder_tokens = p.vocab_size
@@ -94,7 +95,7 @@ class EncoderDecoderLSTM:
         adam = keras.optimizers.Adam(learning_rate=p.learning_rate, beta_1=p.beta1, beta_2=p.beta2, amsgrad=False)
 
         model.compile(optimizer=adam, loss='categorical_crossentropy',
-                      metrics=['accuracy'])
+                      metrics=['categorical_accuracy'])
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
@@ -103,7 +104,7 @@ class EncoderDecoderLSTM:
                             validation_split=0.2)
 
 
-        interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_preprocess([test_x, test_y])
+        interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_hot_preprocess([test_x, test_y])
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
         print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
 
@@ -116,7 +117,6 @@ class EncoderDecoderLSTM:
         decoder_state_input_h = keras.layers.Input(shape=(latent_dim,))
         decoder_state_input_c = keras.layers.Input(shape=(latent_dim,))
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
-        # decoder_masking = keras.layers.Masking(mask_value=0.0)
         decoder_outputs, state_h, state_c = decoder_lstm(
             decoder_masking(decoder_inputs), initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
@@ -143,10 +143,10 @@ class EncoderDecoderLSTM:
             print(f'Input sentence: {repr(train_x[seq_index]), repr(train_y[seq_index])}')
             print(f'Decoded sentence: {repr(decoded_sentence)}')
 
-        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_" + f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.txt")
-
+        dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_" +f"{processor.question_type[0:-4]}_"+f"{datetime.datetime.now().strftime('%b-%d')}.txt")
         with open(dir_results, 'w') as file:
-            file.write(f'Train Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
+            file.write(f'ENCODER DECODER LSTM EXPERIMENT: \t{datetime.datetime.now().strftime("%b-%d-%Y-%H:%M:%S")}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
+            file.write(f'Interpolate Test set\n\tLoss: {interpolate_accuracy[0]}\n\tAccuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
 
             for input_sentence, input_target, decoded_sentence in zip(input_sentences, input_targets,
                                                                       decoded_sentences):

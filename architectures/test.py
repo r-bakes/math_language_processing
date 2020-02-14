@@ -60,7 +60,7 @@ class Test:
 
         processor = preprocessing.processor()
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
-        encoder_input_data, decoder_input_data, decoder_target_data = processor.preprocess_sequence([train_x, train_y])
+        encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_sequence_preprocess([train_x, train_y])
         decoder_target_data = tf.one_hot(decoder_target_data, p.vocab_size+1)
 
         latent_dim = p.hidden_size
@@ -101,7 +101,7 @@ class Test:
                             epochs=self.n_epochs,
                             validation_split=0.2)
 
-        interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.preprocess_sequence([test_x, test_y])
+        interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_sequence_preprocess([test_x, test_y])
         interp_decoder_target_data = tf.one_hot(interp_decoder_target_data, p.vocab_size+1)
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
         print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')

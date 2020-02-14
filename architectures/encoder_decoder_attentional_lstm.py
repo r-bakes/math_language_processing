@@ -56,9 +56,9 @@ class EncoderDecoderLSTM:
         return decoded_sentence
 
     def train(self):
-        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
-
         processor = preprocessing.processor(self.q_type)
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, "encoder_decoder_lstm_"+f"{processor.question_type[0:-4]}_"+f"{datetime.datetime.now().strftime('%b-%d')}"))
+
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
         encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_hot_preprocess([train_x, train_y])
 

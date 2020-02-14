@@ -17,9 +17,8 @@ n_questions = args.n
 n_epochs = args.e
 q_type = args.q
 model = args.m
-
 os.environ['CUDA_VISIBLE_DEVICES'] = args.id
-# network = EncoderDecoderLSTM(n_questions, n_epochs)
+
 if model == 'test':
     network = Test(n_questions, n_epochs)
 elif model == 'lstm':

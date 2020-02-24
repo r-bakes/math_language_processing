@@ -16,8 +16,8 @@ class RandomForestWord():
         processor = preprocessing.Processor(self.q_type)
         x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.random_forest_tfid_char(n_data=self.n_train)
 
-        rnd_clf = RandomForestClassifier(n_estimators=500,
-                                         max_leaf_nodes=16,
+        rnd_clf = RandomForestClassifier(n_estimators=1000,
+                                         max_leaf_nodes=100,
                                          n_jobs=-1)
 
         rnd_clf.fit(x_train, y_train)
@@ -27,7 +27,7 @@ class RandomForestWord():
         y_pred_rf = rnd_clf.predict(x_test[0:100])
         y_pred_decoded = vectorizer.decode(y_pred_rf)
 
-        dir_results = os.path.join(definitions.ROOT_DIR, "results", "random_forest_char" +f"{processor.question_type[0:-4]}_"+f"{datetime.datetime.now().strftime('%b-%d')}.txt")
+        dir_results = os.path.join(definitions.ROOT_DIR, "results", "random_forest_char_"+f"{processor.question_type[0:-4]}_"+f"{datetime.datetime.now().strftime('%b-%d')}.txt")
         with open(dir_results, 'w') as file:
             file.write(f'RANDOM FOREST CHARACTER LEVEL MODEL: \t{datetime.datetime.now().strftime("%b-%d-%Y-%H:%M:%S")}\n\tSample Size: {self.n_train}\n')
             file.write(f'Interpolate Test set\n\tScore: {score}\n\nPrediction Sampling\n')

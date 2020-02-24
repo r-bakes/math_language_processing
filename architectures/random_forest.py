@@ -25,8 +25,7 @@ class RandomForestWord():
         elif self.analysis == 'onehot_word':
             x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.onehot_word_preprocess(n_data=self.n_train)
 
-        rnd_clf = RandomForestClassifier(n_estimators=500,
-                                         max_leaf_nodes=20,
+        rnd_clf = RandomForestClassifier(n_estimators=5000,
                                          n_jobs=-1)
 
 

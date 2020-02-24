@@ -28,7 +28,7 @@ vocab_size = len(vocab)
 vocab_table = dict([(char, i) for i, char in enumerate(vocab)])
 
 
-vocab_forest = list(string.punctuation + string.ascii_letters + string.digits)
+vocab_forest = list(string.punctuation + string.ascii_letters + string.digits + ' ')
 vocab_table_forest = dict([(char, i) for i, char in enumerate(vocab_forest)])
 vocab_size_forest = len(vocab_forest)
 

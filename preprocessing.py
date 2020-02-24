@@ -3,9 +3,8 @@ from tensorflow import keras
 import numpy as np
 import parameters as p
 import definitions
-from sklearn import preprocessing
-from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer, TfidfVectorizer
-from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import OneHotEncoder
 
 import os
 import pdb
@@ -94,38 +93,14 @@ class Processor:
 
         return encoder_input_data, decoder_input_data, decoder_target_data
 
-    def random_forest_tfid_word(self, n_data):
-        train_x, train_y, test_x, test_y = self.get_data(lowercase=True, n_data=n_data)
-        vectorizer = CountVectorizer(analyzer='word', lowercase=True, token_pattern='(?u)[^ ]+')
-        vectorizer.fit_transform(np.concatenate((train_x, train_y)), )  # Remove later and hardcode vocab
-        print(vectorizer.get_feature_names())
+    def tfid_word_preprocess(self, n_data):
+        pass
 
-        count_vec = vectorizer.transform(train_x)
-
-        pdb.set_trace()
-
-
-
-        # pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)),
-        #                 ('tfid', TfidfTransformer())]).fit(corpus)
-        # transformer = TfidfTransformer(smooth_idf=False)
-
-        encoder = preprocessing.OneHotEncoder()
-        encoder.fit(np.array(p.vocab_forest).reshape(1,-1))
-
-        pdb.set_trace()
-
-        encoder.transform(train_x)
-
-        train_x = encoder
-
-        pdb.set_trace()
-
-    def random_forest_tfid_char(self, n_data):
+    def tfid_char_preprocess(self, n_data):
         x_train, y_train, x_test, y_test = self.get_data(lowercase=True, n_data=n_data)
         vectorizer = TfidfVectorizer(analyzer='char', lowercase=True)
 
-        vectorizer.fit(np.concatenate((x_train, y_train)))
+        vectorizer.fit(x_train)
         print(vectorizer.get_feature_names())
 
         x_test_copy = x_test.copy()
@@ -134,6 +109,38 @@ class Processor:
         x_test = vectorizer.transform(x_test)
 
         return x_train, y_train, x_test, y_test, x_test_copy, vectorizer  # Return TF-IDF weighted matrix
+
+    def onehot_char_preprocess(self, n_data):
+        x_train, y_train, x_test, y_test = self.get_data(lowercase=True, n_data=n_data)
+
+        train_encoding = np.zeros((len(x_train), p.vocab_size_forest), dtype='float32')
+        test_encoding = np.zeros((len(x_train), p.vocab_size_forest), dtype='float32')
+
+        x_test_copy = x_test.copy()
+
+        for i, (train, test) in enumerate(zip(x_train, x_test)):
+            for t, (char_train, char_test) in enumerate(zip(train, test)):
+                train_encoding[i, t] = p.vocab_table_forest[char_train]
+                test_encoding[i,t] = p.vocab_table_forest[char_test]
+
+        return train_encoding, y_train, test_encoding, y_test, x_test_copy, None  # Return one hot matrix
+
+    def onehot_word_preprocess(self, n_data):
+        x_train, y_train, x_test, y_test = self.get_data(lowercase=True, n_data=n_data)
+        encoder = OneHotEncoder()
+
+        x_train = np.char.split(x_train, sep=" ")
+        x_test = np.char.split(x_test, sep=" ")
+
+        encoder.fit(x_train)
+        print(encoder.get_feature_names())
+
+        x_test_copy = x_test.copy()
+
+        x_train = encoder.transform(x_train)
+        x_test = encoder.transform(x_test)
+
+        return x_train, y_train, x_test, y_test, x_test_copy, encoder  # Return one hot matrix
 
 
     def get_data(self, n_data, lowercase=False):

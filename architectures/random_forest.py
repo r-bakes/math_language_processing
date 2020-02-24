@@ -33,7 +33,6 @@ class RandomForestWord():
         print(f"Fitting on {self.n_train} samples\n")
         rnd_clf.fit(x_train, y_train)
 
-        pdb.set_trace()
         score = rnd_clf.score(x_test, y_test)
 
         print(f"Beginning random sampling and prediction\n")

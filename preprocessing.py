@@ -114,16 +114,19 @@ class Processor:
         x_train, y_train, x_test, y_test = self.get_data(lowercase=True, n_data=n_data)
 
         train_encoding = np.zeros((len(x_train), p.vocab_size_forest), dtype='float32')
-        test_encoding = np.zeros((len(x_train), p.vocab_size_forest), dtype='float32')
+        test_encoding = np.zeros((len(x_test), p.vocab_size_forest), dtype='float32')
 
         x_test_copy = x_test.copy()
 
-        for i, (train, test) in enumerate(zip(x_train, x_test)):
-            for t, (char_train, char_test) in enumerate(zip(train, test)):
-                train_encoding[i, t] = p.vocab_table_forest[char_train]
-                test_encoding[i,t] = p.vocab_table_forest[char_test]
+        for i, text in enumerate(x_train): # Encode train set
+            for t, char in enumerate(text):
+                train_encoding[i, t] = p.vocab_table_forest[char]
 
-        return train_encoding, y_train, test_encoding, y_test, x_test_copy, None  # Return one hot matrix
+        for i, text in enumerate(x_test): # Encode test set
+            for t, char in enumerate(text):
+                test_encoding[i, t] = p.vocab_table_forest[char]
+
+        return train_encoding, y_train, test_encoding, y_test, x_test_copy, None  # Return one hot matrix of encoded values and targets
 
     def onehot_word_preprocess(self, n_data):
         x_train, y_train, x_test, y_test = self.get_data(lowercase=True, n_data=n_data)

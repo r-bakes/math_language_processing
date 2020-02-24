@@ -58,7 +58,7 @@ class Test:
     def train(self):
         # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
 
-        processor = preprocessing.processor()
+        processor = preprocessing.Processor()
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
         encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_sequence_preprocess([train_x, train_y])
         decoder_target_data = tf.one_hot(decoder_target_data, p.vocab_size+1)

@@ -3,14 +3,14 @@ import numpy as np
 import string
 from tensorflow import keras
 import parameters as p
-from preprocessing import processor
+from preprocessing import Processor
 import os
 np.set_printoptions(threshold=np.inf)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # Grab Data
-processor = processor()
+processor = Processor()
 train_x, train_y, test_x, test_y = processor.get_data()
 train_y_comparison = train_y
 test_y_comparison = test_y

@@ -3,18 +3,20 @@ from tensorflow import keras
 import numpy as np
 import parameters as p
 import definitions
+from sklearn import preprocessing
+from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer, TfidfVectorizer
+from sklearn.pipeline import Pipeline
 
 import os
 import pdb
 
 
-class processor:
+class Processor:
 
     dir_data = os.path.join(definitions.ROOT_DIR, "data")
 
     def __init__(self, q_type):
         self.question_type = q_type
-
 
     def encoder_decoder_sequence_preprocess(self, texts):
         input_texts = np.array(texts[0])
@@ -92,7 +94,49 @@ class processor:
 
         return encoder_input_data, decoder_input_data, decoder_target_data
 
-    def get_data(self, n_data):
+    def random_forest_tfid_word(self, n_data):
+        train_x, train_y, test_x, test_y = self.get_data(lowercase=True, n_data=n_data)
+        vectorizer = CountVectorizer(analyzer='word', lowercase=True, token_pattern='(?u)[^ ]+')
+        vectorizer.fit_transform(np.concatenate((train_x, train_y)), )  # Remove later and hardcode vocab
+        print(vectorizer.get_feature_names())
+
+        count_vec = vectorizer.transform(train_x)
+
+        pdb.set_trace()
+
+
+
+        # pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)),
+        #                 ('tfid', TfidfTransformer())]).fit(corpus)
+        # transformer = TfidfTransformer(smooth_idf=False)
+
+        encoder = preprocessing.OneHotEncoder()
+        encoder.fit(np.array(p.vocab_forest).reshape(1,-1))
+
+        pdb.set_trace()
+
+        encoder.transform(train_x)
+
+        train_x = encoder
+
+        pdb.set_trace()
+
+    def random_forest_tfid_char(self, n_data):
+        x_train, y_train, x_test, y_test = self.get_data(lowercase=True, n_data=n_data)
+        vectorizer = TfidfVectorizer(analyzer='char', lowercase=True)
+
+        vectorizer.fit(np.concatenate((x_train, y_train)))
+        print(vectorizer.get_feature_names())
+
+        x_test_copy = x_test.copy()
+
+        x_train = vectorizer.transform(x_train)
+        x_test = vectorizer.transform(x_test)
+
+        return x_train, y_train, x_test, y_test, x_test_copy, vectorizer  # Return TF-IDF weighted matrix
+
+
+    def get_data(self, n_data, lowercase=False):
         train_easy = open(os.path.join(self.dir_data,r"train-easy", self.question_type), 'r').read().splitlines()
         train_medium = open(os.path.join(self.dir_data,r"train-medium",self.question_type), 'r').read().splitlines()
         train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
@@ -104,9 +148,14 @@ class processor:
         test = np.reshape(test, (-1, 2))
 
         np.random.shuffle(train_easy)  # Shuffle data
+        np.random.shuffle(test)
 
         # Testing reduce scope
         train = train_easy[0:n_data, 0:n_data]
         test = test[0:n_data, 0:n_data]
+
+        if lowercase is True:
+            np.char.lower(train)
+            np.char.lower(test)
 
         return train[:,0], train[:,1], test[:,0], test[:,1]

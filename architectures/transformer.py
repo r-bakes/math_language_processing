@@ -3,7 +3,7 @@ import numpy as np
 import string
 from tensorflow import keras
 import parameters as p
-from preprocessing import processor
+from preprocessing import Processor
 import os
 
 

@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import parameters as p
-from preprocessing import processor
+from preprocessing import Processor
 import os
 
 model_dir = ""

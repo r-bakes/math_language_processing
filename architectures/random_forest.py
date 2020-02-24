@@ -18,9 +18,9 @@ class RandomForestWord():
         processor = preprocessing.Processor(self.q_type)
         if self.analysis == 'tfid_char':
             x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.tfid_char_preprocess(n_data=self.n_train)
-        elif self.analysis =='tfid_word':
+        elif self.analysis == 'tfid_word':
             x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.tfid_word_preprocess(n_data=self.n_train)
-        elif self.analysis =='onehot_char':
+        elif self.analysis == 'onehot_char':
             x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.onehot_char_preprocess(n_data=self.n_train)
         elif self.analysis == 'onehot_word':
             x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.onehot_word_preprocess(n_data=self.n_train)
@@ -29,11 +29,14 @@ class RandomForestWord():
                                          max_leaf_nodes=100,
                                          n_jobs=-1)
 
+
+        print(f"Fitting on {self.n_train} samples\n")
         rnd_clf.fit(x_train, y_train)
+
+        pdb.set_trace()
         score = rnd_clf.score(x_test, y_test)
 
-        print(score)
-
+        print(f"Beginning random sampling and prediction\n")
         # sample predictions and record for analysis
         y_pred = rnd_clf.predict(x_test[0:100])
 

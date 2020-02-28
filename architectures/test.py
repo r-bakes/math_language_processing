@@ -127,7 +127,7 @@ class Test:
         decoded_sentences = []
 
         range_val = 100
-        if self.n_train < 100: range_val = 1  # Debugging
+        if self.n_train < 100: range_val = self.n_train  # Debugging
         for seq_index in range(range_val):
             # Take one sequence (part of the training set)
             # for trying out decoding.

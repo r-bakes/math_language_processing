@@ -75,7 +75,7 @@ class Processor:
         for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
             for t, char in enumerate(input_text):
                 encoder_input_data[i, t, p.vocab_table[char]] = 1.
-            encoder_input_data[i, t + 1:, p.vocab_table['<PAD>']] = 1.
+            # encoder_input_data[i, t + 1:, p.vocab_table['<PAD>']] = 1.
             for t, char in enumerate(target_text):
                 # decoder_target_data is ahead of decoder_input_data by one timestep
                 decoder_input_data[i, t, p.vocab_table[char]] = 1.
@@ -83,8 +83,8 @@ class Processor:
                     # decoder_target_data will be ahead by one timestep
                     # and will not include the start character.
                     decoder_target_data[i, t - 1, p.vocab_table[char]] = 1.
-            decoder_input_data[i, t + 1:, p.vocab_table['<PAD>']] = 1.
-            decoder_target_data[i, t:, p.vocab_table['<PAD>']] = 1.
+            # decoder_input_data[i, t + 1:, p.vocab_table['<PAD>']] = 1.
+            # decoder_target_data[i, t:, p.vocab_table['<PAD>']] = 1.
 
         return encoder_input_data, decoder_input_data, decoder_target_data
 

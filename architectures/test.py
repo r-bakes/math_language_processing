@@ -5,16 +5,17 @@ import datetime
 from tensorflow import keras
 
 import parameters as p
-import preprocessing
+import data_preprocessing
 import network_debugging
 import pdb
 import definitions
 
 class Test:
 
-    def __init__(self, n_train, n_epochs):
+    def __init__(self, n_train, n_epochs, q_type):
         self.n_train = n_train
         self.n_epochs = n_epochs
+        self.q_type = q_type
 
     def decode_sequence(self, input_seq, encoder_model, decoder_model, num_decoder_tokens):
         reverse_target_char_index = dict(
@@ -56,31 +57,30 @@ class Test:
         return decoded_sentence
 
     def train(self):
-        # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=definitions.LOGDIR)
 
-        processor = preprocessing.Processor()
+        processor = data_preprocessing.Processor(self.q_type)
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
         encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_sequence_preprocess([train_x, train_y])
-        decoder_target_data = tf.one_hot(decoder_target_data, p.vocab_size+1)
 
         latent_dim = p.hidden_size
-        num_decoder_tokens = p.vocab_size + 1
-        num_encoder_tokens = p.vocab_size + 1
+        num_decoder_tokens = p.vocab_size
+        num_encoder_tokens = p.vocab_size
 
         # Embedding
         encoder_inputs = keras.layers.Input(shape=(None, ))
-        encoder_masking = keras.layers.Masking(mask_value=0.0)
-        encoder_embedding = keras.layers.Embedding(num_encoder_tokens, num_encoder_tokens)(encoder_masking(encoder_inputs))
-        x, state_h, state_c = keras.layers.LSTM(latent_dim, return_state=True)(encoder_embedding)
+        # encoder_masking = keras.layers.Masking(mask_value=0.0)
+        encoder_embedding = keras.layers.Embedding(num_encoder_tokens, num_encoder_tokens,  mask_zero=True)
+        x, state_h, state_c = keras.layers.LSTM(latent_dim, return_state=True)(encoder_embedding(encoder_inputs))
         # We discard `encoder_outputs` and only keep the states.
         encoder_states = [state_h, state_c]
 
         # Set up the decoder, using `encoder_states` as initial state.
         decoder_inputs = keras.layers.Input(shape=(None,))
-        decoder_masking = keras.layers.Masking(mask_value=0.0)
-        decoder_embedding = keras.layers.Embedding(num_decoder_tokens, num_decoder_tokens)(decoder_masking(decoder_inputs))
+        # decoder_masking = keras.layers.Masking(mask_value=0.0)
+        decoder_embedding = keras.layers.Embedding(num_decoder_tokens, num_decoder_tokens, mask_zero=True)
         decoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, return_state=True)
-        x, _, _ = decoder_lstm(decoder_embedding, initial_state=encoder_states)
+        x, _, _ = decoder_lstm(decoder_embedding(decoder_inputs), initial_state=encoder_states)
         decoder_dense = keras.layers.Dense(num_decoder_tokens, activation='softmax')
         decoder_outputs = decoder_dense(x)
 
@@ -102,7 +102,7 @@ class Test:
                             validation_split=0.2)
 
         interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_sequence_preprocess([test_x, test_y])
-        interp_decoder_target_data = tf.one_hot(interp_decoder_target_data, p.vocab_size+1)
+
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
         print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
 
@@ -114,8 +114,7 @@ class Test:
         decoder_state_input_h = keras.layers.Input(shape=(latent_dim,))
         decoder_state_input_c = keras.layers.Input(shape=(latent_dim,))
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
-        decoder_outputs, state_h, state_c = decoder_lstm(
-            decoder_embedding, initial_state=decoder_states_inputs)
+        decoder_outputs, state_h, state_c = decoder_lstm(decoder_embedding(decoder_inputs), initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
         decoder_outputs = decoder_dense(decoder_outputs)
 
@@ -123,11 +122,13 @@ class Test:
             [decoder_inputs] + decoder_states_inputs,
             [decoder_outputs] + decoder_states)
 
-
         input_sentences = []
         input_targets = []
         decoded_sentences = []
-        for seq_index in range(100):
+
+        range_val = 100
+        if self.n_train < 100: range_val = 1  # Debugging
+        for seq_index in range(range_val):
             # Take one sequence (part of the training set)
             # for trying out decoding.
             input_seq = encoder_input_data[seq_index]  # inputs 160,  matrix

@@ -2,7 +2,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
 import definitions
 import numpy as np
-import preprocessing
+import data_preprocessing
 import pdb
 import datetime
 import os
@@ -15,7 +15,7 @@ class RandomForestWord():
         self.analysis = analysis
 
     def train(self):
-        processor = preprocessing.Processor(self.q_type)
+        processor = data_preprocessing.Processor(self.q_type)
         if self.analysis == 'tfid_char':
             x_train, y_train, x_test, y_test, test_question_copy, vectorizer = processor.tfid_char_preprocess(n_data=self.n_train)
         elif self.analysis == 'tfid_word':

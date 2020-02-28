@@ -21,7 +21,7 @@ class Processor:
         input_texts = np.array(texts[0])
         target_texts = np.array(texts[1])
         max_encoder_seq_length = p.max_question_length
-        max_decoder_seq_length = p.max_question_length
+        max_decoder_seq_length = p.max_answer_length
 
         target_texts = np.char.add(np.full(shape=len(target_texts), fill_value='\t'), target_texts)
         target_texts = np.char.add(target_texts, np.full(shape=len(target_texts), fill_value='\n'))
@@ -32,9 +32,9 @@ class Processor:
         decoder_input_data = np.zeros(
             (len(input_texts), max_decoder_seq_length),
             dtype='float32')
-        decoder_target_data = np.zeros(
-            (len(input_texts), max_decoder_seq_length),
-            dtype='float32')
+        decoder_target_data = np.full(
+            (len(input_texts), max_decoder_seq_length), -1,  # so one hot encode will create zero vector representation
+            dtype='int32')
 
         for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
             for t, char in enumerate(input_text):
@@ -47,12 +47,7 @@ class Processor:
                     # and will not include the start character.
                     decoder_target_data[i, t - 1] = p.vocab_table[char]
 
-        encoder_input_data =\
-            keras.preprocessing.sequence.pad_sequences(encoder_input_data, maxlen=p.max_question_length, padding='post', truncating='post', value=0.0)
-        decoder_target_data =\
-            keras.preprocessing.sequence.pad_sequences(decoder_target_data, maxlen=p.max_question_length, padding='post', truncating='post', value=0.0)
-        decoder_input_data =\
-            keras.preprocessing.sequence.pad_sequences(decoder_input_data, maxlen=p.max_question_length, padding='post', truncating='post', value=0.0)
+        decoder_target_data = tf.one_hot(decoder_target_data, p.vocab_size)
 
         return encoder_input_data, decoder_input_data, decoder_target_data
 
@@ -101,7 +96,6 @@ class Processor:
         vectorizer = TfidfVectorizer(analyzer='char', lowercase=True)
 
         vectorizer.fit(x_train)
-        print(vectorizer.get_feature_names())
 
         x_test_copy = x_test.copy()
 
@@ -145,11 +139,10 @@ class Processor:
 
         return x_train, y_train, x_test, y_test, x_test_copy, encoder  # Return one hot matrix
 
-
     def get_data(self, n_data, lowercase=False):
         train_easy = open(os.path.join(self.dir_data,r"train-easy", self.question_type), 'r').read().splitlines()
-        train_medium = open(os.path.join(self.dir_data,r"train-medium",self.question_type), 'r').read().splitlines()
-        train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
+        # train_medium = open(os.path.join(self.dir_data,r"train-medium",self.question_type), 'r').read().splitlines()
+        # train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
         test = open(os.path.join(self.dir_data, r"interpolate", self.question_type), 'r').read().splitlines()
 
         # focus on easy for now
@@ -161,11 +154,30 @@ class Processor:
         np.random.shuffle(test)
 
         # Testing reduce scope
-        train = train_easy[0:n_data, 0:n_data]
-        test = test[0:n_data, 0:n_data]
+        train = train_easy[0:n_data]
+        test = test[0:n_data]
 
         if lowercase is True:
             np.char.lower(train)
             np.char.lower(test)
 
         return train[:,0], train[:,1], test[:,0], test[:,1]
+
+    def get_data_exp(self, n_data):
+        # train_easy = open(os.path.join(self.dir_data, r"train-easy", self.question_type), 'r').read().splitlines()
+        # train_easy = np.reshape(train_easy, (-1, 2))
+        # train_easy =train_easy[0:n_data]
+        #
+        # test = open(os.path.join(self.dir_data, r"interpolate", self.question_type), 'r').read().splitlines()
+        # test = np.reshape(test, (-1, 2))
+        # test = test[0:n_data]
+        train_dir = os.path.join(self.dir_data, r"train-easy", self.question_type)
+        test_dir = os.path.join(self.dir_data, r"interpolate", self.question_type)
+
+        print(os.path.join(self.dir_data, r"train-easy", self.question_type))
+        data_train = tf.data.TextLineDataset(tf.Variable(train_dir, tf.string))
+        data_test = tf.data.TextLineDataset(tf.Variable(test_dir, tf.string))
+
+        pdb.set_trace()
+        return data_train, data_test
+

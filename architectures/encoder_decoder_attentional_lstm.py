@@ -5,7 +5,7 @@ import os
 import datetime
 
 import parameters as p
-import preprocessing
+import data_preprocessing
 import network_debugging
 import definitions
 import pdb
@@ -56,8 +56,7 @@ class EncoderDecoderLSTM:
         return decoded_sentence
 
     def train(self):
-        processor = preprocessing.Processor(self.q_type)
-        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, "encoder_decoder_lstm_"+f"{processor.question_type[0:-4]}_"+f"{datetime.datetime.now().strftime('%b-%d')}"))
+        processor = data_preprocessing.Processor(self.q_type)
 
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
         encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_hot_preprocess([train_x, train_y])
@@ -94,13 +93,20 @@ class EncoderDecoderLSTM:
         # Run training
         adam = keras.optimizers.Adam(learning_rate=p.learning_rate, beta_1=p.beta1, beta_2=p.beta2, amsgrad=False)
 
-        model.compile(optimizer=adam, loss='categorical_crossentropy',
+        # Callback definitions
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, "encoder_decoder_lstm_" + f"{processor.question_type[0:-4]}_" + f"{datetime.datetime.now().strftime('%b-%d')}"))
+        csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, "encoder_decoder_lstm_" + f"{processor.question_type[0:-4]}_" +f"{datetime.datetime.now().strftime('%b-%d')}",f"training.log"))
+
+
+        model.compile(optimizer=adam,
+                      loss='categorical_crossentropy',
                       metrics=['categorical_accuracy'])
         history = model.fit([encoder_input_data, decoder_input_data],
                             decoder_target_data,
                             batch_size=64,
                             epochs=self.n_epochs,
-                            callbacks=[tensorboard_callback],
+                            callbacks=[tensorboard_callback,
+                                       csv_logger],
                             validation_split=0.2)
 
 
@@ -128,7 +134,10 @@ class EncoderDecoderLSTM:
         input_sentences = []
         input_targets = []
         decoded_sentences = []
-        for seq_index in range(100):
+
+        range_val = 100
+        if self.n_train < 100: range_val=self.n_train
+        for seq_index in range(range_val):
             # Take one sequence (part of the training set)
             # for trying out decoding.
 

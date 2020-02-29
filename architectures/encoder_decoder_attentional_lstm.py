@@ -141,16 +141,16 @@ class EncoderDecoderLSTM:
             # Take one sequence (part of the training set)
             # for trying out decoding.
 
-            input_seq = encoder_input_data[seq_index: seq_index + 1]  # inputs 1, 160, 98 matrix
+            input_seq = interp_encoder_input_data[seq_index: seq_index + 1]  # inputs 1, 160, 98 matrix
             decoded_sentence = self.decode_sequence(input_seq, encoder_model, decoder_model, num_decoder_tokens)
 
-            input_sentences.append(repr(train_x[seq_index]))
-            input_targets.append(repr(train_y[seq_index]))
+            input_sentences.append(test_x[seq_index])
+            input_targets.append(test_y[seq_index])
             decoded_sentences.append(decoded_sentence)
 
             print('-')
-            print(f'Input sentence: {repr(train_x[seq_index]), repr(train_y[seq_index])}')
-            print(f'Decoded sentence: {repr(decoded_sentence)}')
+            print(f'Input sentence: {train_x[seq_index], train_y[seq_index]}')
+            print(f'Decoded sentence: {decoded_sentence}')
 
         dir_results = os.path.join(definitions.ROOT_DIR, "results", "encoder_decoder_lstm_" +f"{processor.question_type[0:-4]}_"+f"{datetime.datetime.now().strftime('%b-%d')}.txt")
         with open(dir_results, 'w') as file:
@@ -159,5 +159,5 @@ class EncoderDecoderLSTM:
 
             for input_sentence, input_target, decoded_sentence in zip(input_sentences, input_targets,
                                                                       decoded_sentences):
-                file.write(f'Input: {input_sentence} | {input_target}\n\t{repr(decoded_sentence)}\n')
+                file.write(f'Input: {input_sentence} | {input_target}\n\t{decoded_sentence}\n')
             file.close()

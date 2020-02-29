@@ -152,12 +152,12 @@ class EncoderDecoderLSTM:
             print(f'Input sentence: {train_x[seq_index], train_y[seq_index]}')
             print(f'Decoded sentence: {decoded_sentence}')
 
-        dir_results = os.path.join(definitions.ROOT_DIR, "results" , f"{datetime.datetime.now().strftime('%b-%d')}_"+"encoder_decoder_lstm_" +f"{processor.question_type[0:-4]}.txt")
+        dir_results = os.path.join(definitions.ROOT_DIR, "results" , f"{datetime.datetime.now().strftime('%b-%d-%H:%M')}_"+"encoder_decoder_lstm_" +f"{processor.question_type[0:-4]}.txt")
         with open(dir_results, 'w') as file:
             file.write(f'ENCODER DECODER LSTM EXPERIMENT: \t{datetime.datetime.now().strftime("%b-%d-%Y-%H:%M:%S")}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
             file.write(f'Interpolate Test set\n\tLoss: {interpolate_accuracy[0]}\n\tAccuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
 
             for input_sentence, input_target, decoded_sentence in zip(input_sentences, input_targets,
                                                                       decoded_sentences):
-                file.write(f'Input: {input_sentence} | {input_target}\n\t{decoded_sentence}\n')
+                file.write(f'Input: {input_sentence} | {input_target}\n\t{repr(decoded_sentence)}\n')
             file.close()

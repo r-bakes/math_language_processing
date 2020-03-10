@@ -60,7 +60,7 @@ class EncoderDecoderLSTM:
         processor = data_preprocessing.Processor(self.q_type)
 
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
-        if self.n_train is None:
+        if self.n_train == -1:
             self.n_train = len(train_x)
 
         encoder_input_data, decoder_input_data, decoder_target_data = processor.encoder_decoder_hot_preprocess([train_x, train_y])

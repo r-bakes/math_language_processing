@@ -139,7 +139,7 @@ class Processor:
 
         return x_train, y_train, x_test, y_test, x_test_copy, encoder  # Return one hot matrix
 
-    def get_data(self, n_data, lowercase=False):
+    def get_data(self, n_data=None, lowercase=False):
         train_easy = open(os.path.join(self.dir_data,r"train-easy", self.question_type), 'r').read().splitlines()
         # train_medium = open(os.path.join(self.dir_data,r"train-medium",self.question_type), 'r').read().splitlines()
         # train_hard = open(os.path.join(self.dir_data,r"train-hard",self.question_type), 'r').read().splitlines()
@@ -147,15 +147,16 @@ class Processor:
 
         # focus on easy for now
         # train_medium, train_hard = np.reshape(train_medium, (-1, 2)), np.reshape(train_hard, (-1, 2))
-        train_easy = np.reshape(train_easy, (-1, 2))
+        train = np.reshape(train_easy, (-1, 2))
         test = np.reshape(test, (-1, 2))
 
-        np.random.shuffle(train_easy)  # Shuffle data
+        np.random.shuffle(train)  # Shuffle data
         np.random.shuffle(test)
 
         # Testing reduce scope
-        train = train_easy[0:n_data]
-        test = test[0:n_data]
+        if n_data is not None:
+            train = train[0:n_data]
+            test = test[0:n_data]
 
         if lowercase is True:
             np.char.lower(train)

@@ -6,7 +6,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Paper Configurations
 hidden_size = 2048
-batch_size = 1024  # 500k total batches
+# batch_size = 1024  500k total batches
+batch_size = 64
 learning_rate = 6 * 10 ** -4
 beta1 = 0.9  # adam optimizer params
 beta2 = 0.995

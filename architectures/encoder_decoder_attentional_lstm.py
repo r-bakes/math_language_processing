@@ -8,14 +8,14 @@ import parameters as p
 import data_preprocessing
 import network_debugging
 import definitions
-import pdb
 
 class EncoderDecoderLSTM:
 
-    def __init__(self, n_train, n_epochs, q_type):
+    def __init__(self, n_train, n_epochs, q_type, exp_name):
         self.n_train = n_train
         self.n_epochs = n_epochs
         self.q_type = q_type
+        self.exp_name = exp_name
 
     def decode_sequence(self, input_seq, encoder_model, decoder_model, num_decoder_tokens):
         reverse_target_char_index = dict(
@@ -56,6 +56,7 @@ class EncoderDecoderLSTM:
         return decoded_sentence
 
     def train(self):
+        experiment_time = datetime.datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
         processor = data_preprocessing.Processor(self.q_type)
 
         train_x, train_y, test_x, test_y = processor.get_data(n_data=self.n_train)
@@ -107,17 +108,15 @@ class EncoderDecoderLSTM:
                             epochs=self.n_epochs,
                             callbacks=[tensorboard_callback,
                                        csv_logger],
-                            validation_split=0.2)
+                            validation_split=0.2,
+                            shuffle=True)
 
 
         interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_hot_preprocess([test_x, test_y])
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
         print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
 
-        # network_debugging.plot_history(history)
-
         # Define sampling models
-
         encoder_model = keras.models.Model(encoder_inputs, encoder_states)
 
         decoder_state_input_h = keras.layers.Input(shape=(latent_dim,))
@@ -135,29 +134,28 @@ class EncoderDecoderLSTM:
         input_targets = []
         decoded_sentences = []
 
-        range_val = 100
+        range_val = 500
         if self.n_train < 100: range_val=self.n_train
         for seq_index in range(range_val):
-            # Take one sequence (part of the training set)
-            # for trying out decoding.
 
-            input_seq = interp_encoder_input_data[seq_index: seq_index + 1]  # inputs 1, 160, 98 matrix
+            input_seq = interp_encoder_input_data[seq_index: seq_index + 1]
             decoded_sentence = self.decode_sequence(input_seq, encoder_model, decoder_model, num_decoder_tokens)
 
             input_sentences.append(test_x[seq_index])
             input_targets.append(test_y[seq_index])
             decoded_sentences.append(decoded_sentence)
 
-            print('-')
-            print(f'Input sentence: {train_x[seq_index], train_y[seq_index]}')
-            print(f'Decoded sentence: {decoded_sentence}')
-
-        dir_results = os.path.join(definitions.ROOT_DIR, "results" , f"{datetime.datetime.now().strftime('%b-%d-%H:%M')}_"+"encoder_decoder_lstm_" +f"{processor.question_type[0:-4]}.txt")
+        dir_results = os.path.join(definitions.ROOT_DIR, "results", f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}.txt")
         with open(dir_results, 'w') as file:
-            file.write(f'ENCODER DECODER LSTM EXPERIMENT: \t{datetime.datetime.now().strftime("%b-%d-%Y-%H:%M:%S")}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
+            file.write(f'ENCODER DECODER LSTM EXPERIMENT: {self.exp_name}\t{experiment_time}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
             file.write(f'Interpolate Test set\n\tLoss: {interpolate_accuracy[0]}\n\tAccuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
 
-            for input_sentence, input_target, decoded_sentence in zip(input_sentences, input_targets,
-                                                                      decoded_sentences):
+            for input_sentence, \
+                input_target, \
+                decoded_sentence in zip(input_sentences,
+                                        input_targets,
+                                        decoded_sentences):
+
                 file.write(f'Input: {input_sentence} | {input_target}\n\t{repr(decoded_sentence)}\n')
+
             file.close()

@@ -163,21 +163,34 @@ class Processor:
 
         return train[:,0], train[:,1], test[:,0], test[:,1]
 
-    def get_data_exp(self, n_data):
-        # train_easy = open(os.path.join(self.dir_data, r"train-easy", self.question_type), 'r').read().splitlines()
-        # train_easy = np.reshape(train_easy, (-1, 2))
-        # train_easy =train_easy[0:n_data]
-        #
-        # test = open(os.path.join(self.dir_data, r"interpolate", self.question_type), 'r').read().splitlines()
-        # test = np.reshape(test, (-1, 2))
-        # test = test[0:n_data]
-        train_dir = os.path.join(self.dir_data, r"train-easy", self.question_type)
-        test_dir = os.path.join(self.dir_data, r"interpolate", self.question_type)
+    def get_data_exp(self, n_data=None):
+        train_easy = open(os.path.join(self.dir_data, r"train-easy", self.question_type), 'r').read().splitlines()
+        test = open(os.path.join(self.dir_data, r"interpolate", self.question_type), 'r').read().splitlines()
 
-        print(os.path.join(self.dir_data, r"train-easy", self.question_type))
-        data_train = tf.data.TextLineDataset(tf.Variable(train_dir, tf.string))
-        data_test = tf.data.TextLineDataset(tf.Variable(test_dir, tf.string))
+        train_easy = np.reshape(train_easy, (-1, 2))
+        test = np.reshape(test, (-1, 2))
 
-        pdb.set_trace()
+        if n_data is not None:
+            train_easy = train_easy[0:n_data]
+            test = test[0:n_data]
+
+        train_x, train_y = train_easy[:,0], train_easy[:,1]
+        train_y = np.char.add(np.full(shape=len(train_y), fill_value='\t'), train_y)
+        train_y = np.char.add(train_y, np.full(shape=len(train_y), fill_value='\n'))
+
+        test_x, test_y = test[:,0], test[:,1]
+        test_y = np.char.add(np.full(shape=len(test_y), fill_value='\t'), test_y)
+        test_y = np.char.add(test_y, np.full(shape=len(test_y), fill_value='\n'))
+
+        data_train = tf.data.Dataset.from_tensor_slices((train_x,train_y))
+        data_test = tf.data.Dataset.from_tensor_slices((test_x,test_y))
+
         return data_train, data_test
 
+    # def one_hot_exp(self):
+    #
+    #     def encoder_input(dataset):
+    #
+    #     def decoder_input(dataset):
+    #
+    #     def

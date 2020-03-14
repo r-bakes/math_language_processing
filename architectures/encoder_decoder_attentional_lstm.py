@@ -98,8 +98,8 @@ class EncoderDecoderLSTM:
         adam = keras.optimizers.Adam(learning_rate=p.learning_rate, beta_1=p.beta1, beta_2=p.beta2, amsgrad=False)
 
         # Callback definitions
-        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, "encoder_decoder_lstm_" + f"{processor.question_type[0:-4]}_" + f"{datetime.datetime.now().strftime('%b-%d')}"))
-        csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, "encoder_decoder_lstm_" + f"{processor.question_type[0:-4]}_" +f"{datetime.datetime.now().strftime('%b-%d')}",f"training.log"))
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}"))
+        csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}",f"training.log"))
 
 
         model.compile(optimizer=adam,

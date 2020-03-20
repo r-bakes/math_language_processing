@@ -150,7 +150,7 @@ class EncoderDecoderLSTM:
 
         dir_results = os.path.join(definitions.ROOT_DIR, "results", f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}.txt")
         with open(dir_results, 'w') as file:
-            file.write(f'ENCODER DECODER LSTM EXPERIMENT: {self.exp_name}\t{experiment_time}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
+            file.write(f'ENCODER DECODER LSTM EXPERIMENT: {self.exp_name}_{processor.question_type[0:-4]}\t{experiment_time}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
             file.write(f'Interpolate Test set\n\tLoss: {interpolate_accuracy[0]}\n\tAccuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
 
             for input_sentence, \

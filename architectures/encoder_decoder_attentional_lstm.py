@@ -98,8 +98,8 @@ class EncoderDecoderLSTM:
         adam = keras.optimizers.Adam(learning_rate=p.learning_rate, beta_1=p.beta1, beta_2=p.beta2, amsgrad=False)
 
         # Callback definitions
-        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}"))
-        csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}",f"training.log"))
+        # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}"))
+        # csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}",f"training.log"))
 
 
         model.compile(optimizer=adam,
@@ -109,15 +109,16 @@ class EncoderDecoderLSTM:
                             decoder_target_data,
                             batch_size=64,
                             epochs=self.n_epochs,
-                            callbacks=[tensorboard_callback,
-                                       csv_logger],
+                            # callbacks=[tensorboard_callback,
+                            #            csv_logger],
                             validation_split=0.2,
                             shuffle=True)
 
 
         interp_encoder_input_data, interp_decoder_input_data, interp_decoder_target_data = processor.encoder_decoder_hot_preprocess([test_x, test_y])
         interpolate_accuracy = model.evaluate([interp_encoder_input_data, interp_decoder_input_data], interp_decoder_target_data)
-        print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')
+
+        print(f'\n\nInterpolate Test set\n  Loss: {interpolate_accuracy[0]}\n  Accuracy: {interpolate_accuracy[1]}')  #
 
         # Define sampling models
         encoder_model = keras.models.Model(encoder_inputs, encoder_states)
@@ -137,8 +138,9 @@ class EncoderDecoderLSTM:
         input_targets = []
         decoded_sentences = []
 
-        range_val = 500
-        if self.n_train < 100: range_val=self.n_train
+        range_val = len(interp_encoder_input_data)
+        score = 0
+        if self.n_train < 100: range_val=self.n_train  # debugging measure
         for seq_index in range(range_val):
 
             input_seq = interp_encoder_input_data[seq_index: seq_index + 1]
@@ -146,12 +148,15 @@ class EncoderDecoderLSTM:
 
             input_sentences.append(test_x[seq_index])
             input_targets.append(test_y[seq_index])
+
             decoded_sentences.append(decoded_sentence)
+
+            if decoded_sentence[0:-1] == test_y[seq_index]: score+=1
 
         dir_results = os.path.join(definitions.ROOT_DIR, "results", f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}.txt")
         with open(dir_results, 'w') as file:
             file.write(f'ENCODER DECODER LSTM EXPERIMENT: {self.exp_name}_{processor.question_type[0:-4]}\t{experiment_time}\n\tEpochs: {self.n_epochs}\n\tSample Size: {self.n_train}\n')
-            file.write(f'Interpolate Test set\n\tLoss: {interpolate_accuracy[0]}\n\tAccuracy: {interpolate_accuracy[1]}\n\nPrediction Sampling\n')
+            file.write(f'Interpolate Test set\n\tLoss: {interpolate_accuracy[0]}\n\tTF_reported_Accuracy: {interpolate_accuracy[1]}\n\tScore: {score/range_val}\n\nPrediction Sampling\n')
 
             for input_sentence, \
                 input_target, \

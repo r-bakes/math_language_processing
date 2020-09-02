@@ -26,13 +26,15 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.id
 
 if model == 'fst_clf':
 
-    result = random_forest_experiment(n_train=n_questions, q_type=q_type, analyzer=v_scheme)
-    result = pd.DataFrame(result)
+    for q in q_list:
 
-    try:
-        results = pd.read_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'))
-        results = results.append(result)
+        result = random_forest_experiment(n_train=n_questions, q_type=q, analyzer=v_scheme)
+        result = pd.DataFrame(result)
 
-        results.to_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), index=False)
-    except FileNotFoundError:
-        result.to_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), index=False)
+        try:
+            results = pd.read_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'))
+            results = results.append(result)
+
+            results.to_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), index=False)
+        except FileNotFoundError:
+            result.to_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), index=False)

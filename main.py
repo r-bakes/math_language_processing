@@ -1,4 +1,5 @@
 import argparse
+import pandas as pd
 import os
 
 from parameters import q_list
@@ -24,12 +25,14 @@ exp_name = args.exp
 os.environ['CUDA_VISIBLE_DEVICES'] = args.id
 
 if model == 'fst_clf':
-    results = [f'Analyzer: {v_scheme}\nn_questions: {n_questions}']
-    for question in q_list:
 
-        question, score = random_forest_experiment(n_train=n_questions, q_type=question, analyzer=v_scheme)
+    result = random_forest_experiment(n_train=n_questions, q_type=q_type, analyzer=v_scheme)
+    result = pd.DataFrame(result)
 
-        results.append(','.join([question, str(score)]))
+    try:
+        results = pd.read_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'))
+        results = results.append(result)
 
-        with open(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), 'w') as f:
-            f.write('\n'.join(results))
+        results.to_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), index=False)
+    except FileNotFoundError:
+        result.to_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'), index=False)

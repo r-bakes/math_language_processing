@@ -6,7 +6,7 @@ from definitions import RESULTS_DIR
 from architectures.random_forest import random_forest_experiment
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--n", default=20, type=int, help="Number of questions to train and test with")
+parser.add_argument("--n", default=200000, type=int, help="Number of questions to train and test with")
 parser.add_argument("--e", default=150, type=int, help="Number of epochs (only applicable to neural nets)")
 parser.add_argument("--m", default='fst_clf', choices=['test', 'lstm', 'fst_clf'], type=str, help="model to train")
 parser.add_argument("--v", default='char', choices=['char', 'word'], type=str, help="vectorization scheme to use (only applicable to random forest option)")
@@ -24,7 +24,7 @@ exp_name = args.exp
 os.environ['CUDA_VISIBLE_DEVICES'] = args.id
 
 if model == 'fst_clf':
-    results = []
+    results = [f'Analyzer: {v_scheme}\nn_questions: {n_questions}']
     for question in q_list:
 
         question, score = random_forest_experiment(n_train=n_questions, q_type=question, analyzer=v_scheme)

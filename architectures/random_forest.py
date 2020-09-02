@@ -33,7 +33,8 @@ def random_forest_experiment(n_train, q_type, analyzer):
     rnd_forest_clf = RandomForestClassifier(n_estimators=100,
                                             random_state=1,
                                             n_jobs=1,
-                                            verbose=0)
+                                            verbose=0,
+                                            max_depth=10)
 
     rnd_forest_clf.fit(x,y)
 

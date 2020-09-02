@@ -6,7 +6,7 @@ import os
 
 from definitions import DATA_DIR
 
-def random_forest_experiment(n_train, q_type):
+def random_forest_experiment(n_train, q_type, analyzer):
 
     train_data_dir = \
         os.path.join(DATA_DIR, 'train-easy', q_type)
@@ -20,34 +20,33 @@ def random_forest_experiment(n_train, q_type):
         train_data = f.read()
         train_data = np.array(train_data.splitlines()).reshape(-1,2)[0:n_train]
 
-    vectorizer = TfidfVectorizer(analyzer='char', lowercase=True)
+    vectorizer = TfidfVectorizer(analyzer=analyzer, lowercase=True)
 
     vectorizer.fit(list(train_data[:,0]) + list(train_data[:,1]))
 
     x = vectorizer.transform(train_data[:,0])
     y = train_data[:,1]
 
-    n_trees = [10, 100, 1000, 5000, 10000]
-    for n in n_trees:
-        rnd_forest_clf = RandomForestClassifier(n_estimators=n,
-                                                random_state=1,
-                                                n_jobs=-1,
-                                                verbose=0)
 
-        rnd_forest_clf.fit(x,y)
+    rnd_forest_clf = RandomForestClassifier(n_estimators=100,
+                                            random_state=1,
+                                            n_jobs=-1,
+                                            verbose=0)
 
-        with open(test_data_dir, 'r') as f:
-            test_data = f.read()
-            test_data = np.array(test_data.splitlines()).reshape(-1,2)
+    rnd_forest_clf.fit(x,y)
 
-        x_test = vectorizer.transform(train_data[:,0])
+    with open(test_data_dir, 'r') as f:
+        test_data = f.read()
+        test_data = np.array(test_data.splitlines()).reshape(-1,2)
 
-        # score = rnd_forest_clf.score(test_data[0], test_data[1])
+    x_test = vectorizer.transform(train_data[:,0])
 
-        results = rnd_forest_clf.predict(x_test)
+    results = rnd_forest_clf.predict(x_test)
 
-        score=0
-        for result, solution, question in zip(results, test_data[:,1], test_data[:,0]):
-            if result == solution: score+=1
+    score=0
+    for result, solution, question in zip(results, test_data[:,1], test_data[:,0]):
+        if result == solution: score+=1
 
-        print(f'With n={n} score was:', score/len(test_data))
+    print(f'{q_type}:'.ljust(50), score/len(test_data))
+    return q_type, score/len(test_data)
+

@@ -1,13 +1,11 @@
 import tensorflow as tf
-from tensorflow import keras
 import numpy as np
-import parameters as p
 import definitions
+import parameters as p
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import OneHotEncoder
 
 import os
-import pdb
 
 
 class Processor:

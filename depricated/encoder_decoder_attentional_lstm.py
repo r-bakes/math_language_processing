@@ -1,13 +1,12 @@
-import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import os
 import datetime
 
-import parameters as p
-import data_preprocessing
-import network_debugging
+from depricated import data_preprocessing
 import definitions
+import parameters as p
+
 
 class EncoderDecoderLSTM:
 
@@ -99,7 +98,7 @@ class EncoderDecoderLSTM:
 
         # Callback definitions
         tensorboard_callback = keras.callbacks.TensorBoard(log_dir=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}"))
-        csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}",f"training.log"))
+        csv_logger = keras.callbacks.CSVLogger(filename=os.path.join(definitions.LOGDIR, f"{self.exp_name}_{processor.question_type[0:-4]}_ENCODER_DECODER_LSTM_{experiment_time}", f"training.log"))
 
 
         model.compile(optimizer=adam,

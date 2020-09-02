@@ -1,14 +1,12 @@
-import tensorflow as tf
 import numpy as np
 import os
 import datetime
 from tensorflow import keras
 
-import parameters as p
-import data_preprocessing
-import network_debugging
-import pdb
+from depricated import data_preprocessing
 import definitions
+import parameters as p
+
 
 class Test:
 

@@ -22,7 +22,7 @@ q_type = args.q
 v_scheme = args.v
 model = args.m
 exp_name = args.exp
-os.environ['CUDA_VISIBLE_DEVICES'] = args.id
+os.environ['CUDA_VISIBLE_DEVICES'] = args.id 
 
 if model == 'fst_clf':
 

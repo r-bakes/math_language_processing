@@ -34,7 +34,7 @@ if model == 'fst_clf':
     for q in q_list:
         try:
 
-            result = random_forest_experiment(n_train=n_questions, q_type=q, analyzer=v_scheme)
+            result = random_forest_experiment(n_train=n_questions, q_type=q, analyzer=v_scheme, max_depth=max_depth, n_estimators=n_estimators)
             result = pd.DataFrame(result)
 
         except MemoryError:

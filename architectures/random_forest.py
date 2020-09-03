@@ -7,7 +7,7 @@ import os
 
 from definitions import DATA_DIR
 
-def random_forest_experiment(n_train, q_type, analyzer):
+def random_forest_experiment(n_train, q_type, analyzer, max_depth, n_estimators):
 
     train_data_dir = \
         os.path.join(DATA_DIR, 'train-easy', q_type)
@@ -29,11 +29,11 @@ def random_forest_experiment(n_train, q_type, analyzer):
     x = vectorizer.transform(train_data[:,0])
     y = train_data[:,1]
 
-    rnd_forest_clf = RandomForestClassifier(n_estimators=10,
+    rnd_forest_clf = RandomForestClassifier(n_estimators=n_estimators,
                                             random_state=1,
                                             n_jobs=-1,
                                             verbose=1,
-                                            max_depth=20
+                                            max_depth=max_depth
                                             )
 
     rnd_forest_clf.fit(x,y)

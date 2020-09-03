@@ -39,8 +39,8 @@ def random_forest_experiment(n_train, q_type, analyzer):
     rnd_forest_clf.fit(x,y)
 
     depths = [tree.tree_.max_depth for tree in rnd_forest_clf.estimators_]
-    print('Max tree depth:', max(rnd_forest_clf.estimators_.tree_.max_depth))
-    print('Mean tree depth:', np.mean(rnd_forest_clf))
+    print('Max tree depth:', round(max(depths)))
+    print('Mean tree depth:', round(np.mean(depths)))
 
 
     with open(test_data_dir, 'r') as f:

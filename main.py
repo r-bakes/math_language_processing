@@ -41,9 +41,9 @@ if model == 'fst_clf':
             result = pd.DataFrame({'question': [q], 'score': [np.nan]})
 
         try:
-            results = pd.read_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_estimators}_estimators_{max_depth}_maxdepth.txt'))
+            results = pd.read_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_questions}_n_train_{n_estimators}_estimators_{max_depth}_maxdepth.txt'))
             results = results.append(result)
 
-            results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)
+            results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_questions}_n_train_{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)
         except FileNotFoundError:
-            result.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)
+            result.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_questions}_n_train_{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)

@@ -26,6 +26,17 @@ MAX_LENGTH = max_question_length
 SOS_token = 0
 EOS_token = 1
 
+def encoder_decoder_lstm_experiment(n_train, q_type):
+
+    train_data_dir = \
+        os.path.join(DATA_DIR, 'train-easy', q_type)
+
+    test_data_dir = \
+        os.path.join(DATA_DIR, 'interpolate', q_type)
+
+    return prepare_data(n_train=n_train, q_type=q_type, reverse=False)
+
+
 class Lang:
     def __init__(self, name):
         self.name = name
@@ -53,31 +64,26 @@ def read_langs(n_train, q_type, reverse=False):
     data = open(os.path.join(DATA_DIR, 'train-easy', q_type)).read().splitlines()
     data = np.array(data).reshape(-1,2)[0:n_train]
 
-    questions = np.char.lower(data[:,0])
-    answers = np.char.lower(data[:,1])
-
-
+    data = np.char.lower(data)
 
     if reverse:
         input_lang = Lang('answers')
         output_lang = Lang('questions')
 
-        pairs = [answers, questions]
+        data[:, [0, 1]] = data[:, [1, 0]]  # Swap order
     else:
         input_lang = Lang('questions')
         output_lang = Lang('answers')
 
-        pairs = [questions, answers]
-
-    return input_lang, output_lang, pairs
+    return input_lang, output_lang, data
 
 def prepare_data(n_train, q_type, reverse=False):
     input_lang, output_lang, pairs = read_langs(n_train, q_type, reverse)
 
     print('Counting words...')
-    for input, output in zip(pairs[0], pairs[1]):
-        input_lang.add_sentence(input)
-        output_lang.add_sentence(output)
+    for i, o in pairs:
+        input_lang.add_sentence(i)
+        output_lang.add_sentence(o)
     print('Counted words:')
     print(input_lang.name, input_lang.n_words)
     print(output_lang.name, output_lang.n_words)
@@ -86,7 +92,7 @@ def prepare_data(n_train, q_type, reverse=False):
 
 
 
-class EnoderRNN(nn.Module):
+class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
@@ -238,7 +244,7 @@ def timeSince(since, percent):
     rs = es - s
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
-def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, learning_rate=0.01):
+def trainIters(encoder, decoder, n_iters, print_every=2, plot_every=2, learning_rate=0.01):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -330,16 +336,15 @@ def evaluate_randomly(encoder, decoder, n=10):
         print('<', output_sentence)
         print('')
 
-def encoder_decoder_lstm_experiment(n_train, q_type):
-
-    train_data_dir = \
-        os.path.join(DATA_DIR, 'train-easy', q_type)
-
-    test_data_dir = \
-        os.path.join(DATA_DIR, 'interpolate', q_type)
-
-    return prepare_data(n_train=n_train, q_type=q_type, reverse=True)
 
 
-input_lang, output_lang, pairs = encoder_decoder_lstm_experiment(n_train=100, q_type='algebra__linear_1d.txt')     # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
+input_lang, output_lang, pairs = encoder_decoder_lstm_experiment(n_train=100, q_type='arithmetic__mul.txt')     # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
 print(random.choice(pairs))
+
+hidden_size = 256
+encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
+attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
+
+trainIters(encoder1, attn_decoder1, 7500, print_every=5)
+
+evaluate_randomly(encoder1, attn_decoder1)

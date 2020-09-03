@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+import numpy as np
 import os
 
 from parameters import q_list
@@ -28,8 +29,13 @@ if model == 'fst_clf':
 
     for q in q_list:
 
-        result = random_forest_experiment(n_train=n_questions, q_type=q, analyzer=v_scheme)
-        result = pd.DataFrame(result)
+        try:
+
+            result = random_forest_experiment(n_train=n_questions, q_type=q, analyzer=v_scheme)
+            result = pd.DataFrame(result)
+
+        except MemoryError:
+            result = pd.DataFrame({'question': [q], 'score': [np.nan]})
 
         try:
             results = pd.read_csv(os.path.join(RESULTS_DIR, 'random_forest_results.txt'))

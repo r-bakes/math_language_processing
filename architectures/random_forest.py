@@ -29,14 +29,19 @@ def random_forest_experiment(n_train, q_type, analyzer):
     x = vectorizer.transform(train_data[:,0])
     y = train_data[:,1]
 
-
     rnd_forest_clf = RandomForestClassifier(n_estimators=10,
                                             random_state=1,
                                             n_jobs=-1,
                                             verbose=100,
-                                            max_depth=20)
+                                            # max_depth=6
+                                            )
 
     rnd_forest_clf.fit(x,y)
+
+    depths = [tree.tree_.max_depth for tree in rnd_forest_clf.estimators_]
+    print('Max tree depth:', max(rnd_forest_clf.estimators_.tree_.max_depth))
+    print('Mean tree depth:', np.mean(rnd_forest_clf))
+
 
     with open(test_data_dir, 'r') as f:
         test_data = f.read()

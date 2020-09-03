@@ -23,7 +23,7 @@ q_list = [filename for filename in os.listdir(os.path.join(ROOT_DIR, r"data/trai
 
 
 # Lexicon and embedding init
-vocab = ['<PAD>'] + list(string.punctuation + string.ascii_letters + string.digits + " " +"\t" + "\n")
+vocab = ['<PAD>'] + list(string.punctuation + string.ascii_letters + string.digits)
 vocab_size = len(vocab)
 vocab_table = dict([(char, i) for i, char in enumerate(vocab)])
 

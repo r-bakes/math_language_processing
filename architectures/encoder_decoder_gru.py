@@ -62,9 +62,12 @@ def read_langs(n_train, q_type, reverse=False):
     print('reading data...')
 
     data = open(os.path.join(DATA_DIR, 'train-easy', q_type)).read().splitlines()
+    test_data = (np.array(data)).reshape(-1,2)[n_train:n_train+30]
     data = np.array(data).reshape(-1,2)[0:n_train]
 
+    test_data = np.char.lower(test_data)
     data = np.char.lower(data)
+
 
     if reverse:
         input_lang = Lang('answers')
@@ -75,10 +78,10 @@ def read_langs(n_train, q_type, reverse=False):
         input_lang = Lang('questions')
         output_lang = Lang('answers')
 
-    return input_lang, output_lang, data
+    return input_lang, output_lang, data, test_data
 
 def prepare_data(n_train, q_type, reverse=False):
-    input_lang, output_lang, pairs = read_langs(n_train, q_type, reverse)
+    input_lang, output_lang, pairs, test_data = read_langs(n_train, q_type, reverse)
 
     print('Counting words...')
     for i, o in pairs:
@@ -88,7 +91,7 @@ def prepare_data(n_train, q_type, reverse=False):
     print(input_lang.name, input_lang.n_words)
     print(output_lang.name, output_lang.n_words)
 
-    return input_lang, output_lang, pairs
+    return input_lang, output_lang, pairs, test_data
 
 
 
@@ -264,7 +267,6 @@ def trainIters(encoder, decoder, n_iters, print_every=2, plot_every=2, learning_
         loss = train(input_tensor, target_tensor, encoder,
                      decoder, encoder_optimizer, decoder_optimizer, criterion)
         print_loss_total += loss
-        plot_loss_total += loss
 
         if iter % print_every == 0:
             print_loss_avg = print_loss_total / print_every
@@ -272,24 +274,8 @@ def trainIters(encoder, decoder, n_iters, print_every=2, plot_every=2, learning_
             print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
                                          iter, iter / n_iters * 100, print_loss_avg))
 
-        if iter % plot_every == 0:
-            plot_loss_avg = plot_loss_total / plot_every
-            plot_losses.append(plot_loss_avg)
-            plot_loss_total = 0
 
-    showPlot(plot_losses)
 
-import matplotlib.pyplot as plt
-plt.switch_backend('agg')
-import matplotlib.ticker as ticker
-
-def showPlot(points):
-    plt.figure()
-    fig, ax = plt.subplots()
-    # this locator puts ticks at regular intervals
-    loc = ticker.MultipleLocator(base=0.2)
-    ax.yaxis.set_major_locator(loc)
-    plt.plot(points)
 
 def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
     with torch.no_grad():
@@ -326,9 +312,9 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
 
         return decoded_words, decoder_attentions[:di + 1]
 
-def evaluate_randomly(encoder, decoder, n=10):
+def evaluate_randomly(encoder, decoder, n=30):
     for i in range(n):
-        pair = random.choice(pairs)
+        pair = random.choice(test_data)
         print('>', pair[0])
         print('=', pair[1])
         output_words, attentions = evaluate(encoder, decoder, pair[0])
@@ -338,13 +324,13 @@ def evaluate_randomly(encoder, decoder, n=10):
 
 
 
-input_lang, output_lang, pairs = encoder_decoder_lstm_experiment(n_train=100, q_type='arithmetic__mul.txt')     # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
+input_lang, output_lang, pairs, test_data = encoder_decoder_lstm_experiment(n_train=10, q_type='algebra__linear_1d.txt')     # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
 print(random.choice(pairs))
 
 hidden_size = 256
 encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
 attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
 
-trainIters(encoder1, attn_decoder1, 7500, print_every=5)
+trainIters(encoder1, attn_decoder1, 75, print_every=5)
 
 evaluate_randomly(encoder1, attn_decoder1)

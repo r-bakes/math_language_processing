@@ -30,7 +30,7 @@ def random_forest_experiment(n_train, q_type, analyzer):
     y = train_data[:,1]
 
 
-    rnd_forest_clf = RandomForestClassifier(n_estimators=20,
+    rnd_forest_clf = RandomForestClassifier(n_estimators=10,
                                             random_state=1,
                                             n_jobs=-1,
                                             verbose=100,

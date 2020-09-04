@@ -18,23 +18,15 @@ from torch import optim
 import torch.nn.functional as F
 
 from parameters import max_question_length
+from data import get_data
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 teacher_forcing_ratio = 0.5
 MAX_LENGTH = max_question_length
 SOS_token = 0
 EOS_token = 1
-
-def encoder_decoder_lstm_experiment(n_train, q_type):
-
-    train_data_dir = \
-        os.path.join(DATA_DIR, 'train-easy', q_type)
-
-    test_data_dir = \
-        os.path.join(DATA_DIR, 'interpolate', q_type)
-
-    return prepare_data(n_train=n_train, q_type=q_type, reverse=False)
 
 
 class Lang:
@@ -58,40 +50,34 @@ class Lang:
         else:
             self.word2count[word]+1
 
-def read_langs(n_train, q_type, reverse=False):
+def read_langs(n_train, q_type):
     print('reading data...')
-
-    data = open(os.path.join(DATA_DIR, 'train-easy', q_type)).read().splitlines()
-    test_data = (np.array(data)).reshape(-1,2)[n_train:n_train+30]
-    data = np.array(data).reshape(-1,2)[0:n_train]
+    train_data = get_data(n_train=n_train, q_type=q_type, type='train')
+    test_data = get_data(n_train=n_train, q_type=q_type, type='test')
 
     test_data = np.char.lower(test_data)
-    data = np.char.lower(data)
+    train_data = np.char.lower(train_data)
 
+    input_lang = Lang('questions')
+    output_lang = Lang('answers')
 
-    if reverse:
-        input_lang = Lang('answers')
-        output_lang = Lang('questions')
+    return input_lang, output_lang, train_data, test_data
 
-        data[:, [0, 1]] = data[:, [1, 0]]  # Swap order
-    else:
-        input_lang = Lang('questions')
-        output_lang = Lang('answers')
-
-    return input_lang, output_lang, data, test_data
-
-def prepare_data(n_train, q_type, reverse=False):
-    input_lang, output_lang, pairs, test_data = read_langs(n_train, q_type, reverse)
+def prepare_data(n_train, q_type):
+    input_lang, output_lang, train_data, test_data = read_langs(n_train, q_type)
 
     print('Counting words...')
-    for i, o in pairs:
+    for i, o in train_data:
+        input_lang.add_sentence(i)
+        output_lang.add_sentence(o)
+    for i, o in test_data:
         input_lang.add_sentence(i)
         output_lang.add_sentence(o)
     print('Counted words:')
     print(input_lang.name, input_lang.n_words)
     print(output_lang.name, output_lang.n_words)
 
-    return input_lang, output_lang, pairs, test_data
+    return input_lang, output_lang, train_data, test_data
 
 
 
@@ -177,10 +163,10 @@ def tensor_from_sentence(lang, sentence):
     indexes.append(EOS_token)
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
-def tensorsFromPair(pair):
+def tensorsFromPair(pair, input_lang, output_lang):
     input_tensor = tensor_from_sentence(input_lang, pair[0])
     target_tensor = tensor_from_sentence(output_lang, pair[1])
-    return (input_tensor, target_tensor)
+    return input_tensor, target_tensor
 
 def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length=MAX_LENGTH):
     encoder_hidden = encoder.initHidden()
@@ -247,37 +233,37 @@ def timeSince(since, percent):
     rs = es - s
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
-def trainIters(encoder, decoder, n_iters, print_every=2, plot_every=2, learning_rate=0.01):
+def trainIters(encoder, decoder, epochs, data, input_lang, output_lang, learning_rate=0.01):
     start = time.time()
-    plot_losses = []
-    print_loss_total = 0  # Reset every print_every
-    plot_loss_total = 0  # Reset every plot_every
+
 
     encoder_optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = optim.SGD(decoder.parameters(), lr=learning_rate)
-    training_pairs = [tensorsFromPair(random.choice(pairs))
-                      for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
-    for iter in range(1, n_iters + 1):
-        training_pair = training_pairs[iter - 1]
-        input_tensor = training_pair[0]
-        target_tensor = training_pair[1]
-
-        loss = train(input_tensor, target_tensor, encoder,
-                     decoder, encoder_optimizer, decoder_optimizer, criterion)
-        print_loss_total += loss
-
-        if iter % print_every == 0:
-            print_loss_avg = print_loss_total / print_every
-            print_loss_total = 0
-            print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
-                                         iter, iter / n_iters * 100, print_loss_avg))
+    n_epoch=1
+    while n_epoch <= epochs:
+        print_loss_total = 0  # Reset every print_every
+        np.random.shuffle(data)
+        for pair in data:
+            input_tensor, target_tensor = tensorsFromPair(pair, input_lang, output_lang)
 
 
+            loss = train(input_tensor, target_tensor, encoder,
+                         decoder, encoder_optimizer, decoder_optimizer, criterion)
+            print_loss_total += loss
 
 
-def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
+        print_loss_avg = print_loss_total / len(data)
+        print_loss_total = 0
+        print('%s (%d %d%%) %.4f' % (timeSince(start, n_epoch / epochs),
+                                     n_epoch, n_epoch / epochs * 100, print_loss_avg))
+        n_epoch+=1
+
+
+
+
+def evaluate(encoder, decoder, sentence, input_lang, output_lang, max_length=MAX_LENGTH):
     with torch.no_grad():
         input_tensor = tensor_from_sentence(input_lang, sentence)
         input_length = input_tensor.size()[0]
@@ -312,25 +298,30 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
 
         return decoded_words, decoder_attentions[:di + 1]
 
-def evaluate_randomly(encoder, decoder, n=30):
-    for i in range(n):
-        pair = random.choice(test_data)
-        print('>', pair[0])
-        print('=', pair[1])
-        output_words, attentions = evaluate(encoder, decoder, pair[0])
+def evaluate_test_data(encoder, decoder, data, input_lang, output_lang):
+    score = 0
+    for question, answer in data:
+        print('>', question)
+        print('=', answer)
+        output_words, attentions = evaluate(encoder, decoder, question, input_lang, output_lang)
         output_sentence = ' '.join(output_words)
         print('<', output_sentence)
         print('')
 
+        if output_sentence.replace(' <EOS>', '') == answer: score+=1
+
+    print('---------------------------------------------')
+    print(f'SCORE: {score/len(data)}')
 
 
-input_lang, output_lang, pairs, test_data = encoder_decoder_lstm_experiment(n_train=10, q_type='algebra__linear_1d.txt')     # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
-print(random.choice(pairs))
+def encoder_decoder_gru_experiment(n_train, q_type, epochs):
 
-hidden_size = 256
-encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
-attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
+    input_lang, output_lang, train_data, test_data = prepare_data(n_train=n_train, q_type=q_type)  # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
 
-trainIters(encoder1, attn_decoder1, 75, print_every=5)
+    hidden_size = 256
+    encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
+    attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
 
-evaluate_randomly(encoder1, attn_decoder1)
+    trainIters(encoder1, attn_decoder1, epochs=epochs, data=train_data, input_lang=input_lang, output_lang=output_lang)
+
+    evaluate_test_data(encoder1, attn_decoder1, test_data, input_lang, output_lang)

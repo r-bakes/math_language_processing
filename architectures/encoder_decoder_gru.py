@@ -1,5 +1,4 @@
-from __future__ import unicode_literals, print_function, division
-from definitions import DATA_DIR
+from definitions import DATA_TSV_DIR, DATA_DIR
 
 from io import open
 import numpy as np
@@ -9,16 +8,16 @@ import re
 import random
 import os
 
-import time
 import math
 
 import torch
+import torchtext
+from torchtext.data import Field, BucketIterator, TabularDataset
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 
 from parameters import max_question_length
-from data import get_data
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,6 +26,7 @@ teacher_forcing_ratio = 0.5
 MAX_LENGTH = max_question_length
 SOS_token = 0
 EOS_token = 1
+PAD_token = 2
 
 
 class Lang:
@@ -34,8 +34,8 @@ class Lang:
         self.name = name
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {0: 'SOS', 1: 'EOS'}
-        self.n_words = 2
+        self.index2word = {0: 'SOS', 1: 'EOS', 2: 'PAD'}
+        self.n_words = 3
 
     def add_sentence(self, sentence):
         for word in sentence.split(' '):
@@ -98,25 +98,25 @@ class EncoderRNN(nn.Module):
     def initHidden(self):
         return torch.zeros(1, 1, self.hidden_size, device=device)
 
-class DecoderRNN(nn.Module):
-    def __init__(self, hidden_size, output_size):
-        super(DecoderRNN, self).__init__()
-        self.hidden_size = hidden_size
-
-        self.embedding = nn.Embedding(output_size, hidden_size)
-        self.gru = nn.GRU(hidden_size, hidden_size)
-        self.out = nn.Linear(hidden_size, output_size)
-        self.softmax = nn.LogSoftmax(dim=1)
-
-    def forward(self, input, hidden):
-        output = self.embedding(input).view(1, 1, -1)
-        output = F.relu(output)
-        output, hidden = self.gru(output, hidden)
-        output = self.softmax(self.out(output[0]))
-        return output, hidden
-
-    def initHidden(self):
-        return torch.zeros(1, 1, self.hidden_size, device=device)
+# class DecoderRNN(nn.Module):
+#     def __init__(self, hidden_size, output_size):
+#         super(DecoderRNN, self).__init__()
+#         self.hidden_size = hidden_size
+#
+#         self.embedding = nn.Embedding(output_size, hidden_size)
+#         self.gru = nn.GRU(hidden_size, hidden_size)
+#         self.out = nn.Linear(hidden_size, output_size)
+#         self.softmax = nn.LogSoftmax(dim=1)
+#
+#     def forward(self, input, hidden):
+#         output = self.embedding(input).view(1, 1, -1)
+#         output = F.relu(output)
+#         output, hidden = self.gru(output, hidden)
+#         output = self.softmax(self.out(output[0]))
+#         return output, hidden
+#
+#     def initHidden(self):
+#         return torch.zeros(1, 1, self.hidden_size, device=device)
 
 class AttnDecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, dropout_p=0.1, max_length=MAX_LENGTH):
@@ -167,6 +167,7 @@ def tensorsFromPair(pair, input_lang, output_lang):
     input_tensor = tensor_from_sentence(input_lang, pair[0])
     target_tensor = tensor_from_sentence(output_lang, pair[1])
     return input_tensor, target_tensor
+
 
 def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length=MAX_LENGTH):
     encoder_hidden = encoder.initHidden()
@@ -226,19 +227,19 @@ def asMinutes(s):
     return '%dm %ds' % (m, s)
 
 
-def timeSince(since, percent):
+def time_since(since, percent):
     now = time.time()
     s = now - since
     es = s / (percent)
     rs = es - s
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
-def trainIters(encoder, decoder, epochs, data, input_lang, output_lang, learning_rate=0.01):
+def train_iters(encoder, decoder, epochs, data, input_lang, output_lang, learning_rate=0.01):
     start = time.time()
 
 
-    encoder_optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
-    decoder_optimizer = optim.SGD(decoder.parameters(), lr=learning_rate)
+    encoder_optimizer = optim.Adam(encoder.parameters(), lr=learning_rate)
+    decoder_optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
     criterion = nn.NLLLoss()
 
     n_epoch=1
@@ -256,10 +257,9 @@ def trainIters(encoder, decoder, epochs, data, input_lang, output_lang, learning
 
         print_loss_avg = print_loss_total / len(data)
         print_loss_total = 0
-        print('%s (%d %d%%) %.4f' % (timeSince(start, n_epoch / epochs),
+        print('%s (%d %d%%) %.4f' % (time_since(start, n_epoch / epochs),
                                      n_epoch, n_epoch / epochs * 100, print_loss_avg))
         n_epoch+=1
-
 
 
 
@@ -315,13 +315,33 @@ def evaluate_test_data(encoder, decoder, data, input_lang, output_lang):
 
 
 def encoder_decoder_gru_experiment(n_train, q_type, epochs):
+    # BATCH_SIZE = 2
+    # N_EPOCHS = 100
+    # CLIP = 1
+    #
+    # SRC = Field(tokenize=list,
+    #             lower=True)
+    #
+    # TRG = Field(tokenize=list,
+    #             init_token='<SOS>',
+    #             eos_token='<EOS>',
+    #             lower=True)
+    #
+    # data = TabularDataset(path=os.path.join(DATA_TSV_DIR, 'train-easy', q_type),
+    #                       format='TSV',
+    #                       fields=[('index', None), ('question', SRC), ('answer', TRG)],
+    #                       skip_header=True)
+    #
+    # data.examples = data.examples[0:n_train]  # reduce scope for testing
 
     input_lang, output_lang, train_data, test_data = prepare_data(n_train=n_train, q_type=q_type)  # Encoder reads an input sequence and outputs a single vector, decoder reads that vector and outputs a sequence
 
     hidden_size = 256
     encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
+    # encoder1 = EncoderRNN(len(SRC.vocab), hidden_size).to(device)
     attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
-
-    trainIters(encoder1, attn_decoder1, epochs=epochs, data=train_data, input_lang=input_lang, output_lang=output_lang)
+    # attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
+    print('Begin training\n')
+    train_iters(encoder1, attn_decoder1, epochs=epochs, data=train_data, input_lang=input_lang, output_lang=output_lang)
 
     evaluate_test_data(encoder1, attn_decoder1, test_data, input_lang, output_lang)

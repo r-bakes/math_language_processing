@@ -49,10 +49,10 @@ def create_data_iterators(n_train, q_type, device):
     train, val = data.split(split_ratio=0.8, stratified=False, strata_field='label', random_state=None)
 
     SRC.build_vocab(data)
-    # SRC.build_vocab(test)
+    SRC.build_vocab(test)
 
     TRG.build_vocab(data)
-    # TRG.build_vocab(test)
+    TRG.build_vocab(test)
 
     train_iterator, valid_iterator = BucketIterator.splits(
         (train, val),

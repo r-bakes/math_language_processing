@@ -19,7 +19,7 @@ max_question_length = 160  # characters
 max_answer_length = 32
 
 # Data
-q_list = [filename for filename in os.listdir(os.path.join(ROOT_DIR, r"data/train-easy")) if filename.endswith(".txt")]
+q_list = [filename for filename in os.listdir(os.path.join(ROOT_DIR, 'data_tsv', 'train-easy')) if filename.endswith(".tsv")]
 
 
 # Lexicon and embedding init

@@ -195,7 +195,7 @@ class Seq2Seq(nn.Module):
             outputs = torch.zeros(p.max_answer_length, batch_size, trg_vocab_size).to(self.device)
 
             # first input to the decoder is the <sos> token
-            output = torch.full(size=(1, batch_size), fill_value=output_stoi['<SOS>'], dtype=int)[0]
+            output = torch.full(size=(1, batch_size), fill_value=output_stoi['<SOS>'], dtype=int).to(self.device)[0]
 
             i = 1
             while i < p.max_answer_length and output[0] != output_stoi['<EOS>']:
@@ -372,5 +372,5 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
     results = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
     results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), sep='\t')
 
-    print(f'EXPERIMENT CONCLUDED IN {(time.time() - start)/(60**2)} HOURS')
+    print(f'EXPERIMENT CONCLUDED IN {round((time.time() - start)/(60**2), 2)} HOURS')
 

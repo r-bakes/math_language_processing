@@ -2,6 +2,7 @@ import torch
 import torchtext
 
 import math
+import pandas as pd
 
 import random
 from typing import Tuple
@@ -13,8 +14,11 @@ from torch import Tensor
 
 from torchtext.data import BucketIterator
 import time
+import os
 
 from data import create_data_iterators, epoch_time
+from definitions import RESULTS_DIR
+import parameters as p
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -168,28 +172,39 @@ class Seq2Seq(nn.Module):
         self.decoder = decoder
         self.device = device
 
-    def forward(self,
-                src: Tensor,
-                trg: Tensor,
-                teacher_forcing_ratio: float = 0.5) -> Tensor:
+    def forward(self, src: Tensor, trg: Tensor=None, teacher_forcing_ratio: float=0.5, output_stoi=None) -> Tensor:
 
         batch_size = src.shape[1]
-        max_len = trg.shape[0]
         trg_vocab_size = self.decoder.output_dim
 
-        outputs = torch.zeros(max_len, batch_size, trg_vocab_size).to(self.device)
-
         encoder_outputs, hidden = self.encoder(src)
+        
+        if trg is not None:  # Training
+            outputs = torch.zeros(trg.shape[0], batch_size, trg_vocab_size).to(self.device)
+            # first input to the decoder is the <sos> token
+            output = trg[0, :]
 
-        # first input to the decoder is the <sos> token
-        output = trg[0,:]
+            for t in range(1, trg.shape[0]):
+                output, hidden = self.decoder(output, hidden, encoder_outputs)
+                outputs[t] = output
+                teacher_force = random.random() < teacher_forcing_ratio
+                top1 = output.max(1)[1]
+                output = (trg[t] if teacher_force else top1)
 
-        for t in range(1, max_len):
-            output, hidden = self.decoder(output, hidden, encoder_outputs)
-            outputs[t] = output
-            teacher_force = random.random() < teacher_forcing_ratio
-            top1 = output.max(1)[1]
-            output = (trg[t] if teacher_force else top1)
+        elif trg is None:  # Prediction sampling
+            outputs = torch.zeros(p.max_answer_length, batch_size, trg_vocab_size).to(self.device)
+
+            # first input to the decoder is the <sos> token
+            output = torch.full(size=(1, batch_size), fill_value=output_stoi['<SOS>'], dtype=int)[0]
+
+            i = 1
+            while i < p.max_answer_length and output[0] != output_stoi['<EOS>']:
+                output, hidden = self.decoder(output, hidden, encoder_outputs)
+                outputs[i] = output
+                output = output.max(1)[1]
+                i+=1
+
+            outputs = outputs[0:i]  # trim before returning
 
         return outputs
 
@@ -264,10 +279,12 @@ def evaluate(model: nn.Module,
 
 def test(model: nn.Module,
          iterator: BucketIterator,
-         output_stoi: list,
-         input_stoi: list):
+         output_itos: list,
+         input_itos: list,
+         output_stoi: dict):
 
     model.eval()
+    questions, solutions, predictions=[], [], []
     score=0
     with torch.no_grad():
 
@@ -276,7 +293,7 @@ def test(model: nn.Module,
             src = batch.question
             trg = batch.answer
 
-            output = model(src, trg, 0)  # turn off teacher forcing
+            output = model(src=src, trg=None, output_stoi=output_stoi)  # turn off teacher forcing
 
             topv, topi = output[1:].topk(1)
             question_sequence = src.T
@@ -285,16 +302,23 @@ def test(model: nn.Module,
 
 
             for pred_seq, sol_seq, que_seq in zip(prediction_sequence, solution_sequence, question_sequence):
-                question = ''.join([input_stoi[i] for i in que_seq if input_stoi[i] != '<pad>'])
-                prediction = ''.join([output_stoi[i] for i in pred_seq])
-                solution = ''.join([output_stoi[i] for i in sol_seq])
+                question = ''.join([input_itos[i] for i in que_seq])
+                prediction = ''.join([output_itos[i] for i in pred_seq])
+                solution = ''.join([output_itos[i] for i in sol_seq])
 
-                print(f'>\t{question}')
-                print(f'=\t{solution}')
-                print(f'<\t{prediction}')
-                print('')
+                questions.append(question)
+                predictions.append(prediction)
+                solutions.append(solution)
+                if prediction == solution: score += 1
 
-def encoder_decoder_attentional_lstm_experiment(n_train, q_type, n_epochs):
+    print(f'FINAL SCORE: {score/len(questions)}')
+    df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions})
+
+    return df
+
+def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name):
+    start = time.time()
+
     # Grab Data
     train_iterator, valid_iterator, SRC, TRG, test_iterator = create_data_iterators(n_train=n_train, q_type=q_type, device=device)
 
@@ -306,7 +330,7 @@ def encoder_decoder_attentional_lstm_experiment(n_train, q_type, n_epochs):
     DEC_EMB_DIM = 512
     ENC_HID_DIM = 2048
     DEC_HID_DIM = 2048
-    ATTN_DIM = 8
+    ATTN_DIM = 1024
     ENC_DROPOUT = 0.5
     DEC_DROPOUT = 0.5
     CLIP = 0.1
@@ -345,6 +369,8 @@ def encoder_decoder_attentional_lstm_experiment(n_train, q_type, n_epochs):
         print(f'\tTrain Loss: {train_loss:.3f}')
         print(f'\t Val. Loss: {valid_loss:.3f}')
 
-    test(model=model, iterator=test_iterator, input_stoi=SRC.vocab.itos, output_stoi=TRG.vocab.itos)
+    results = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
+    results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), sep='\t')
 
+    print(f'EXPERIMENT CONCLUDED IN {(time.time() - start)/(60**2)} HOURS')
 

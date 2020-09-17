@@ -22,7 +22,7 @@ n_vocab = len(vocab)
 char2index = dict([(char, i) for i, char in enumerate(vocab)])
 index2char = dict([(i, char) for i, char in enumerate(vocab)])
 
-def create_data_iterators(n_train, q_type, device):
+def create_data_iterators(n_train, q_type, device, difficulty):
     BATCH_SIZE=100
 
     SRC = Field(tokenize=list,
@@ -33,7 +33,7 @@ def create_data_iterators(n_train, q_type, device):
                 eos_token='<EOS>',
                 lower=True)
 
-    data = TabularDataset(path=os.path.join(DATA_TSV_DIR, 'train-easy', q_type),
+    data = TabularDataset(path=os.path.join(DATA_TSV_DIR, difficulty, q_type),
                           format='TSV',
                           fields=[('index', None), ('question', SRC), ('answer', TRG)],
                           skip_header=True)

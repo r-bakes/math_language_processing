@@ -45,7 +45,7 @@ def create_data_iterators(n_train, q_type, device, difficulty):
 
 
     if n_train != -1: data.examples = data.examples[0:n_train]  # reduce scope for testing
-    if n_train <= 20: test.examples = test.examples[0:n_train]
+    if 0 < n_train <= 20: test.examples = test.examples[0:n_train]
 
     train, val = data.split(split_ratio=0.8, stratified=False, strata_field='label', random_state=None)
 

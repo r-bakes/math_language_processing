@@ -9,7 +9,7 @@ from architectures.random_forest import random_forest_experiment
 from architectures.encoder_decoder_attentional_gru import encoder_decoder_attentional_gru_experiment
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--n", default=200000, type=int, help="Number of questions to train and test with")
+parser.add_argument("--n", default=-1, type=int, help="Number of questions to train and test with")
 parser.add_argument("--e", default=100, type=int, help="Number of epochs (only applicable to neural nets)")
 parser.add_argument("--d", default='train-easy', type=str, choices=['train-easy', 'train-medium', 'train-hard'], help='difficulty of training dataset')
 parser.add_argument("--m", default='gru', choices=['gru', 'lstm', 'fst_clf'], type=str, help="model to train")

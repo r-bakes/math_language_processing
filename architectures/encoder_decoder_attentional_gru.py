@@ -319,7 +319,7 @@ def test(model: nn.Module,
 def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id):
     os.environ['CUDA_VISIBLE_DEVICES'] = device_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
+
     start = time.time()
 
     # Grab Data

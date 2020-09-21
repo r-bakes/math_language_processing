@@ -11,8 +11,6 @@ import os
 
 from definitions import DATA_DIR
 
-
-
 from torchtext.data import Field, BucketIterator, Iterator, TabularDataset
 from definitions import DATA_TSV_DIR
 

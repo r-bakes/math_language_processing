@@ -314,7 +314,7 @@ def test(model: nn.Module,
     print(f'FINAL SCORE: {score/len(questions)}')
     df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions})
 
-    return df
+    return df, score/len(questions)
 
 def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id):
     os.environ['CUDA_VISIBLE_DEVICES'] = device_id
@@ -372,8 +372,17 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         print(f'\tTrain Loss: {train_loss:.3f}')
         print(f'\t Val. Loss: {valid_loss:.3f}')
 
-    results = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
-    results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), sep='\t')
+    results, score = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
+
+    if not os.path.exists(os.path.join(RESULTS_DIR, exp_name.lower())): os.makedirs(os.path.join(RESULTS_DIR, exp_name.lower()))
+
+    results.to_csv(os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), sep='\t', index=False)
+
+    with open(os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), 'r') as result_file:
+        with open(os.path.join(RESULTS_DIR, exp_name.lower(), 'final.tsv'), 'w') as final_file:
+            final_file.write(f'experiment: {exp_name} | q_type: {q_type} | score: {round(score, 3)} | model: ENCODER DECODER ATTENTIONAL GRU | n_train: {len(train_iterator.dataset)} | n_epochs: {n_epochs} | difficulty: {difficulty} | hours_training: {round((time.time() - start)/(60**2), 2)} | optimizer: adam | criterion: cross entropy loss\n')
+            final_file.write(result_file.read())
+    os.rename(os.path.join(RESULTS_DIR, exp_name.lower(), 'final.tsv'), os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'))
 
     print(f'EXPERIMENT CONCLUDED IN {round((time.time() - start)/(60**2), 2)} HOURS')
 

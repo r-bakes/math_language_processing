@@ -328,9 +328,9 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
 
     ENC_EMB_DIM = 512
     DEC_EMB_DIM = 512
-    ENC_HID_DIM = 2048
+    ENC_HID_DIM = 512
     DEC_HID_DIM = 2048
-    ATTN_DIM = 1024
+    ATTN_DIM = 16
     ENC_DROPOUT = 0.5
     DEC_DROPOUT = 0.5
     CLIP = 0.1
@@ -370,7 +370,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         print(f'\t Val. Loss: {valid_loss:.3f}')
 
     results = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
-    results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_{difficulty[5:]}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), sep='\t')
+    results.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), sep='\t')
 
     print(f'EXPERIMENT CONCLUDED IN {round((time.time() - start)/(60**2), 2)} HOURS')
 

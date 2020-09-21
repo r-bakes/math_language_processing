@@ -33,7 +33,7 @@ model = args.m
 exp_name = args.exp
 max_depth = args.d
 n_estimators = args.s
-os.environ['CUDA_VISIBLE_DEVICES'] = args.id 
+id = args.id
 
 if model == 'fst_clf':
 
@@ -55,4 +55,4 @@ if model == 'fst_clf':
             result.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_questions}_n_train_{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)
 
 elif model=='gru':
-    encoder_decoder_attentional_gru_experiment(n_train=n_questions, q_type=q_type, n_epochs=n_epochs, exp_name=exp_name, difficulty=difficulty)
+    encoder_decoder_attentional_gru_experiment(n_train=n_questions, q_type=q_type, n_epochs=n_epochs, exp_name=exp_name, difficulty=difficulty, device_id=id)

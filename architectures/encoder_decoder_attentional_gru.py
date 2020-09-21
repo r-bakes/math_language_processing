@@ -20,7 +20,7 @@ from data import create_data_iterators, epoch_time
 from definitions import RESULTS_DIR
 import parameters as p
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class Encoder(nn.Module):
     def __init__(self,
@@ -316,7 +316,10 @@ def test(model: nn.Module,
 
     return df
 
-def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty):
+def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id):
+    os.environ['CUDA_VISIBLE_DEVICES'] = device_id
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     start = time.time()
 
     # Grab Data

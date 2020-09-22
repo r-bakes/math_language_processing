@@ -384,5 +384,4 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
             final_file.write(result_file.read())
     os.rename(os.path.join(RESULTS_DIR, exp_name.lower(), 'final.tsv'), os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'))
 
-    print(f'EXPERIMENT CONCLUDED IN {round((time.time() - start)/(60**2), 2)} HOURS')
-
+    print(f'{q_type[:-4]} EXPERIMENT CONCLUDED IN {round((time.time() - start)/(60**2), 2)} HOURS')

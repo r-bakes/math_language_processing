@@ -371,6 +371,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
         print(f'\tTrain Loss: {train_loss:.3f}')
         print(f'\t Val. Loss: {valid_loss:.3f}')
+        if epoch % 10 == 0: print(f'Question: {q_type} | Experiment: {exp_name}')
 
     results, score = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
 
@@ -380,7 +381,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
 
     with open(os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), 'r') as result_file:
         with open(os.path.join(RESULTS_DIR, exp_name.lower(), 'final.tsv'), 'w') as final_file:
-            final_file.write(f'experiment: {exp_name} | q_type: {q_type} | score: {round(score, 3)} | model: ENCODER DECODER ATTENTIONAL GRU | n_train: {len(train_iterator.dataset)} | n_epochs: {n_epochs} | difficulty: {difficulty} | hours_training: {round((time.time() - start)/(60**2), 2)} | optimizer: adam | criterion: cross entropy loss\n')
+            final_file.write(f'experiment: {exp_name} | q_type: {q_type} | score: {round(score, 3)} | model: ENCODER DECODER ATTENTIONAL GRU | n_train: {len(train_iterator.dataset)} | n_epochs: {n_epochs} | difficulty: {difficulty} | hours_training: {round((time.time() - start)/(60**2), 2)} | optimizer: adam | criterion: cross entropy loss | enc hidden dim: {ENC_HID_DIM} | dec hidden dim: {DEC_HID_DIM} | attn dim: {ATTN_DIM}\n')
             final_file.write(result_file.read())
     os.rename(os.path.join(RESULTS_DIR, exp_name.lower(), 'final.tsv'), os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'))
 

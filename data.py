@@ -21,7 +21,7 @@ char2index = dict([(char, i) for i, char in enumerate(vocab)])
 index2char = dict([(i, char) for i, char in enumerate(vocab)])
 
 def create_data_iterators(n_train, q_type, device, difficulty):
-    BATCH_SIZE=1024
+    BATCH_SIZE=512
 
     SRC = Field(tokenize=list,
                 lower=True)

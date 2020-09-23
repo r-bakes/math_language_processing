@@ -316,7 +316,7 @@ def test(model: nn.Module,
 
     return df, score/len(questions)
 
-def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size):
+def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size, encoder_hidden_size, decoder_hidden_size):
     os.environ['CUDA_VISIBLE_DEVICES'] = device_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -331,8 +331,8 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
 
     ENC_EMB_DIM = 512
     DEC_EMB_DIM = 512
-    ENC_HID_DIM = 2048
-    DEC_HID_DIM = 2048
+    ENC_HID_DIM = encoder_hidden_size
+    DEC_HID_DIM = decoder_hidden_size
     ATTN_DIM = 16
     ENC_DROPOUT = 0.5
     DEC_DROPOUT = 0.5

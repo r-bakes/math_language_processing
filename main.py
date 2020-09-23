@@ -13,6 +13,8 @@ parser.add_argument("--n", default=-1, type=int, help="Number of questions to tr
 parser.add_argument("--e", default=100, type=int, help="Number of epochs (only applicable to neural nets)")
 parser.add_argument("--d", default='train-easy', type=str, choices=['train-easy', 'train-medium', 'train-hard'], help='difficulty of training dataset')
 parser.add_argument("--m", default='gru', choices=['gru', 'lstm', 'fst_clf'], type=str, help="model to train")
+parser.add_argument("--eh", default=2048, choices=[64, 128, 256, 512, 1024, 2048], type=int, help="encoder hidden size")
+parser.add_argument("--dh", default=2048, choices=[64, 128, 256, 512, 1024, 2048], type=int, help="decoder hidden size")
 
 parser.add_argument("--q", default=q_list[0], choices=q_list, type=str, help="question type to train on")
 parser.add_argument("--exp", default=f"BENCHMARK", type=str, help="Experiment name for file storing results" )
@@ -28,10 +30,13 @@ args = parser.parse_args()
 
 n_questions = args.n
 n_epochs = args.e
+model = args.m
+enc_hidden = args.eh
+dec_hidden = args.dh
 difficulty = args.d
 q_type = args.q
+
 v_scheme = args.v
-model = args.m
 exp_name = args.exp
 batch_size = args.bs
 
@@ -59,4 +64,12 @@ if model == 'fst_clf':
             result.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_questions}_n_train_{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)
 
 elif model=='gru':
-    encoder_decoder_attentional_gru_experiment(n_train=n_questions, q_type=q_type, n_epochs=n_epochs, exp_name=exp_name, difficulty=difficulty, device_id=id, batch_size=batch_size)
+    encoder_decoder_attentional_gru_experiment(n_train=n_questions,
+                                               q_type=q_type,
+                                               n_epochs=n_epochs,
+                                               exp_name=exp_name,
+                                               difficulty=difficulty,
+                                               device_id=id,
+                                               batch_size=batch_size,
+                                               encoder_hidden_size=enc_hidden,
+                                               decoder_hidden_size=dec_hidden)

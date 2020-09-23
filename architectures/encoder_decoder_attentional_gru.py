@@ -316,14 +316,14 @@ def test(model: nn.Module,
 
     return df, score/len(questions)
 
-def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id):
+def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size):
     os.environ['CUDA_VISIBLE_DEVICES'] = device_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     start = time.time()
 
     # Grab Data
-    train_iterator, valid_iterator, SRC, TRG, test_iterator = create_data_iterators(n_train=n_train, q_type=q_type, difficulty=difficulty, device=device)
+    train_iterator, valid_iterator, SRC, TRG, test_iterator = create_data_iterators(n_train=n_train, q_type=q_type, difficulty=difficulty, device=device, batch_size=batch_size)
 
     # Model Parameters
     INPUT_DIM = len(SRC.vocab)
@@ -381,7 +381,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
 
     with open(os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'), 'r') as result_file:
         with open(os.path.join(RESULTS_DIR, exp_name.lower(), f'copy_{exp_name}_{difficulty}_{q_type[:-4]}.tsv'), 'w') as final_file:
-            final_file.write(f'experiment: {exp_name} | q_type: {q_type} | score: {round(score, 3)} | model: ENCODER DECODER ATTENTIONAL GRU | n_train: {len(train_iterator.dataset)} | n_epochs: {n_epochs} | difficulty: {difficulty} | hours_training: {round((time.time() - start)/(60**2), 2)} | optimizer: adam | criterion: cross entropy loss | enc hidden dim: {ENC_HID_DIM} | dec hidden dim: {DEC_HID_DIM} | attn dim: {ATTN_DIM}\n')
+            final_file.write(f'experiment: {exp_name} | q_type: {q_type} | score: {round(score, 3)} | model: ENCODER DECODER ATTENTIONAL GRU | n_train: {len(train_iterator.dataset)} | n_epochs: {n_epochs} | difficulty: {difficulty} | hours_training: {round((time.time() - start)/(60**2), 2)}| batch size: {batch_size} | optimizer: adam | criterion: cross entropy loss | enc hidden dim: {ENC_HID_DIM} | dec hidden dim: {DEC_HID_DIM} | attn dim: {ATTN_DIM}\n')
             final_file.write(result_file.read())
     os.rename(os.path.join(RESULTS_DIR, exp_name.lower(), f'copy_{exp_name}_{difficulty}_{q_type[:-4]}.tsv'), os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'))
 

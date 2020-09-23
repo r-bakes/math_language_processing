@@ -20,8 +20,7 @@ n_vocab = len(vocab)
 char2index = dict([(char, i) for i, char in enumerate(vocab)])
 index2char = dict([(i, char) for i, char in enumerate(vocab)])
 
-def create_data_iterators(n_train, q_type, device, difficulty):
-    BATCH_SIZE=512
+def create_data_iterators(n_train, q_type, device, difficulty, batch_size):
 
     SRC = Field(tokenize=list,
                 lower=True)
@@ -57,7 +56,7 @@ def create_data_iterators(n_train, q_type, device, difficulty):
 
     train_iterator, valid_iterator = BucketIterator.splits(
         (train, val),
-        batch_size=BATCH_SIZE,
+        batch_size=batch_size,
         sort=False,
         device=device)
 

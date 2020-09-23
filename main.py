@@ -16,6 +16,8 @@ parser.add_argument("--m", default='gru', choices=['gru', 'lstm', 'fst_clf'], ty
 
 parser.add_argument("--q", default=q_list[0], choices=q_list, type=str, help="question type to train on")
 parser.add_argument("--exp", default=f"BENCHMARK", type=str, help="Experiment name for file storing results" )
+parser.add_argument("--bs", default=512, choices=[64, 128, 256, 512, 1024], type=int, help="batch size for training")
+
 
 parser.add_argument("--v", default='char', choices=['char', 'word'], type=str, help="vectorization scheme to use (only applicable to random forest option)")
 parser.add_argument("--id", default='1', choices=['0','1','2','3'], type=str, help="Cuda visible device id for use")
@@ -31,6 +33,8 @@ q_type = args.q
 v_scheme = args.v
 model = args.m
 exp_name = args.exp
+batch_size = args.bs
+
 max_depth = args.d
 n_estimators = args.s
 id = args.id
@@ -55,4 +59,4 @@ if model == 'fst_clf':
             result.to_csv(os.path.join(RESULTS_DIR, f'{exp_name}_random_forest_results__{n_questions}_n_train_{n_estimators}_estimators_{max_depth}_maxdepth.txt'), index=False)
 
 elif model=='gru':
-    encoder_decoder_attentional_gru_experiment(n_train=n_questions, q_type=q_type, n_epochs=n_epochs, exp_name=exp_name, difficulty=difficulty, device_id=id)
+    encoder_decoder_attentional_gru_experiment(n_train=n_questions, q_type=q_type, n_epochs=n_epochs, exp_name=exp_name, difficulty=difficulty, device_id=id, batch_size=batch_size)

@@ -46,7 +46,7 @@ def create_data_iterators(n_train, q_type, device, difficulty, batch_size):
 
     print(f'Number of train examples: {len(data)}')
 
-    train, val = data.split(split_ratio=0.8, stratified=False, strata_field='label', random_state=None)
+    train, val = data.split(split_ratio=0.9, stratified=False, strata_field='label', random_state=None)
 
     SRC.build_vocab(data)
     SRC.build_vocab(test)

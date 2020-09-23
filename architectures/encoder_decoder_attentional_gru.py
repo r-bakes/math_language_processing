@@ -331,7 +331,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
 
     ENC_EMB_DIM = 512
     DEC_EMB_DIM = 512
-    ENC_HID_DIM = 1024
+    ENC_HID_DIM = 2048
     DEC_HID_DIM = 2048
     ATTN_DIM = 16
     ENC_DROPOUT = 0.5

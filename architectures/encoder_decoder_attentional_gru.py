@@ -351,7 +351,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
 
     model.apply(init_weights)
 
-    optimizer = optim.Adam(model.parameters(), lr=p.learning_rate)
+    optimizer = optim.Adam(model.parameters(), betas=(p.beta1, p.beta2), lr=p.learning_rate, eps=p.epsilon)
 
     PAD_IDX = TRG.vocab.stoi['<pad>']
 

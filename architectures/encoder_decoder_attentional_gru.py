@@ -372,7 +372,10 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
         print(f'\tTrain Loss: {train_loss:.3f}')
         print(f'\t Val. Loss: {valid_loss:.3f}')
-        if epoch % 10 == 0: print(f'Question: {q_type[:-4]} | Experiment: {exp_name}\n\n')
+        if epoch % 10 == 0:
+            print(f'\t Val. Loss: {valid_loss:.3f} \t\t\t\t Question: {q_type[:-4]} | Experiment: {exp_name}')
+        else:
+            print(f'\t Val. Loss: {valid_loss:.3f}')
 
     results, score = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
 

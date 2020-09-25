@@ -370,7 +370,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
         if epoch % 10 == 0:
-            print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s \t\t\t\t Question: {q_type[:-4]} | Experiment: {exp_name} | Est. Time Remaining: {round((n_epochs-epoch)*(end_time-start_time)/60,2)}h')
+            print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s \t\t\t\t Question: {q_type[:-4]} | Experiment: {exp_name} | Est. Time Remaining: {round((n_epochs-epoch)*(end_time - start_time)/(60**2),2)}h')
         else:
             print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
         print(f'\tTrain Loss: {train_loss:.3f}')

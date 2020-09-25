@@ -10,7 +10,7 @@ from architectures.encoder_decoder_attentional_gru import encoder_decoder_attent
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n", default=-1, type=int, help="Number of questions to train and test with")
-parser.add_argument("--e", default=100, type=int, help="Number of epochs (only applicable to neural nets)")
+parser.add_argument("--e", default=150, type=int, help="Number of epochs (only applicable to neural nets)")
 parser.add_argument("--d", default='train-easy', type=str, choices=['train-easy', 'train-medium', 'train-hard'], help='difficulty of training dataset')
 parser.add_argument("--m", default='gru', choices=['gru', 'lstm', 'fst_clf'], type=str, help="model to train")
 parser.add_argument("--eh", default=2048, choices=[64, 128, 256, 512, 1024, 2048], type=int, help="encoder hidden size")

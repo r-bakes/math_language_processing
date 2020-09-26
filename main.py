@@ -11,14 +11,14 @@ from architectures.encoder_decoder_attentional_gru import encoder_decoder_attent
 parser = argparse.ArgumentParser()
 parser.add_argument("--n", default=-1, type=int, help="Number of questions to train and test with")
 parser.add_argument("--e", default=150, type=int, help="Number of epochs (only applicable to neural nets)")
-parser.add_argument("--d", default='train-easy', type=str, choices=['train-easy', 'train-medium', 'train-hard'], help='difficulty of training dataset')
+parser.add_argument("--d", default='train-easy', type=str, choices=['train-easy', 'train-medium', 'train-hard', 'train-all'], help='difficulty of training dataset')
 parser.add_argument("--m", default='gru', choices=['gru', 'lstm', 'fst_clf'], type=str, help="model to train")
 parser.add_argument("--eh", default=2048, choices=[64, 128, 256, 512, 1024, 2048], type=int, help="encoder hidden size")
 parser.add_argument("--dh", default=2048, choices=[64, 128, 256, 512, 1024, 2048], type=int, help="decoder hidden size")
 
 parser.add_argument("--q", default=q_list[0], choices=q_list, type=str, help="question type to train on")
 parser.add_argument("--exp", default=f"BENCHMARK", type=str, help="Experiment name for file storing results" )
-parser.add_argument("--bs", default=512, choices=[64, 128, 256, 512, 1024], type=int, help="batch size for training")
+parser.add_argument("--bs", default=512, choices=[16, 32, 64, 128, 256, 512, 1024], type=int, help="batch size for training")
 
 
 parser.add_argument("--v", default='char', choices=['char', 'word'], type=str, help="vectorization scheme to use (only applicable to random forest option)")

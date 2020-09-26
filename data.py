@@ -11,7 +11,7 @@ import os
 
 from definitions import DATA_DIR
 
-from torchtext.data import Field, BucketIterator, Iterator, TabularDataset
+from torchtext.data import Field, BucketIterator, Iterator, TabularDataset, Dataset
 from definitions import DATA_TSV_DIR
 
 
@@ -29,11 +29,32 @@ def create_data_iterators(n_train, q_type, device, difficulty, batch_size):
                 init_token='<SOS>',
                 eos_token='<EOS>',
                 lower=True)
+    if difficulty == 'train-all':
+        data_easy = TabularDataset(path=os.path.join(DATA_TSV_DIR, 'train-easy', q_type),
+                                   format='TSV',
+                                   fields=[('index', None), ('question', SRC), ('answer', TRG)],
+                                   skip_header=True)
 
-    data = TabularDataset(path=os.path.join(DATA_TSV_DIR, difficulty, q_type),
-                          format='TSV',
-                          fields=[('index', None), ('question', SRC), ('answer', TRG)],
-                          skip_header=True)
+        data_medium = TabularDataset(path=os.path.join(DATA_TSV_DIR, 'train-medium', q_type),
+                                     format='TSV',
+                                     fields=[('index', None), ('question', SRC), ('answer', TRG)],
+                                     skip_header=True)
+
+        data_hard = TabularDataset(path=os.path.join(DATA_TSV_DIR, 'train-hard', q_type),
+                                   format='TSV',
+                                   fields=[('index', None), ('question', SRC), ('answer', TRG)],
+                                   skip_header=True)
+
+        data = Dataset([example for example in data_hard + data_medium + data_easy],
+                       fields=[('index', None), ('question', SRC), ('answer', TRG)],)
+
+
+    else:
+        data = TabularDataset(path=os.path.join(DATA_TSV_DIR, difficulty, q_type),
+                              format='TSV',
+                              fields=[('index', None), ('question', SRC), ('answer', TRG)],
+                              skip_header=True)
+
 
     test = TabularDataset(path=os.path.join(DATA_TSV_DIR, 'interpolate', q_type),
                           format='TSV',

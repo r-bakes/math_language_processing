@@ -74,13 +74,13 @@ elif model=='gru':
                                                encoder_hidden_size=enc_hidden,
                                                decoder_hidden_size=dec_hidden)
 
-elif model=='lstm':
-    encoder_decoder_attentional_lstm_experiment(n_train=n_questions,
-                                                q_type=q_type,
-                                                n_epochs=n_epochs,
-                                                exp_name=exp_name,
-                                                difficulty=difficulty,
-                                                device_id=id,
-                                                batch_size=batch_size,
-                                                encoder_hidden_size=enc_hidden,
-                                                decoder_hidden_size=dec_hidden)
+# elif model=='lstm':
+#     encoder_decoder_attentional_lstm_experiment(n_train=n_questions,
+#                                                 q_type=q_type,
+#                                                 n_epochs=n_epochs,
+#                                                 exp_name=exp_name,
+#                                                 difficulty=difficulty,
+#                                                 device_id=id,
+#                                                 batch_size=batch_size,
+#                                                 encoder_hidden_size=enc_hidden,
+#                                                 decoder_hidden_size=dec_hidden)

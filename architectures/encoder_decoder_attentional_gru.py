@@ -173,7 +173,7 @@ class Seq2Seq(nn.Module):
         self.decoder = decoder
         self.device = device
 
-    def forward(self, src: Tensor, trg: Tensor=None, teacher_forcing_ratio: float=0.5, output_stoi=None) -> Tensor:
+    def forward(self, src: Tensor, trg: Tensor=None, teacher_forcing_ratio: float=0.5, output_stoi=None, char_offset=False, offset=4) -> Tensor:
 
         batch_size = src.shape[1]
         trg_vocab_size = self.decoder.output_dim
@@ -192,7 +192,7 @@ class Seq2Seq(nn.Module):
                 top1 = output.max(1)[1]
                 output = (trg[t] if teacher_force else top1)
 
-        elif trg is None:  # Prediction sampling
+        elif trg is None and char_offset is False:  # Prediction sampling
             outputs = torch.zeros(p.max_answer_length, batch_size, trg_vocab_size).to(self.device)
 
             # first input to the decoder is the <sos> token
@@ -206,6 +206,27 @@ class Seq2Seq(nn.Module):
                 i+=1
 
             outputs = outputs[0:i]  # trim before returning
+
+        elif trg is None and char_offset is True:  # Prediction sampling
+            outputs = [torch.zeros(p.max_answer_length, batch_size, trg_vocab_size).to(self.device) for i in range(0, offset)]
+
+            # first input to the decoder is the <sos> token, generate first output char and select top k
+            output_init = torch.full(size=(1, batch_size), fill_value=output_stoi['<SOS>'], dtype=int).to(self.device)[0]
+
+            for outputs_i in range(0, offset):
+                output, hidden = self.decoder(output_init, hidden, encoder_outputs)
+                output = output.topk(offset)[1][0][outputs_i:outputs_i+1] # set up first char of sequence to be the i_th offset
+                outputs[outputs_i][1][0][output[0]] = 1  # manually set zero matrix to have first char in sequence of i_th prediction offset to 1
+
+
+                i = 2
+                while i < p.max_answer_length and output[0] != output_stoi['<EOS>']:
+                    output, hidden = self.decoder(output, hidden, encoder_outputs)
+                    outputs[outputs_i][i] = output
+                    output = output.max(1)[1]
+                    i+=1
+
+                outputs[outputs_i] = outputs[outputs_i][0:i]  # trim before returning
 
         return outputs
 
@@ -279,14 +300,15 @@ def evaluate(model: nn.Module,
     return epoch_loss / len(iterator)
 
 def test(model: nn.Module,
+         char_offset: bool,
          iterator: BucketIterator,
          output_itos: list,
          input_itos: list,
          output_stoi: dict):
 
     model.eval()
-    questions, solutions, predictions =[], [], []
-    dis1, dis2, dis3 = [], [], []
+    questions, solutions, predictions = [], [], []
+    predictions_2, predictions_3, predictions_4 = [], [], []
     score=0
     with torch.no_grad():
 
@@ -295,40 +317,69 @@ def test(model: nn.Module,
             src = batch.question
             trg = batch.answer
 
-            output = model(src=src, trg=None, output_stoi=output_stoi)  # turn off teacher forcing
+            output = model(src=src, trg=None, output_stoi=output_stoi, char_offset=char_offset)  # turn off teacher forcing
 
-            topv, topi = output[1:].topk(4)
+
             question_sequence = src.T
-            prediction_sequence = topi[:,:,0].T
-            distractor_1, distractor_2, distractor_3 = topi[:,:,1].T, topi[:,:,2].T, topi[:,:,3].T
-
             solution_sequence = trg[1:].T
 
+            if char_offset == False:
+                topv, topi = output[1:].topk(1)
+                prediction_sequence = topi[:, :, 0].T
 
-            for pred_seq, sol_seq, que_seq, dis_1, dis_2, dis_3 in zip(prediction_sequence, solution_sequence, question_sequence, distractor_1, distractor_2, distractor_3):
-                question = ''.join([input_itos[i] for i in que_seq])
-                prediction = ''.join([output_itos[i] for i in pred_seq])
-                solution = ''.join([output_itos[i] for i in sol_seq])
+                for pred_seq, sol_seq, que_seq in zip(prediction_sequence, solution_sequence, question_sequence):
+                    question = ''.join([input_itos[i] for i in que_seq])
+                    prediction = ''.join([output_itos[i] for i in pred_seq])
+                    solution = ''.join([output_itos[i] for i in sol_seq])
 
-                d1 = ''.join([output_itos[i] for i in dis_1])
-                d2 = ''.join([output_itos[i] for i in dis_2])
-                d3 = ''.join([output_itos[i] for i in dis_3])
+                    questions.append(question)
+                    predictions.append(prediction)
+                    solutions.append(solution)
 
-                questions.append(question)
-                predictions.append(prediction)
-                solutions.append(solution)
+                    if prediction == solution: score += 1
 
-                dis1.append(d1)
-                dis2.append(d2)
-                dis3.append(d3)
-                if prediction == solution: score += 1
+                df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions})
+
+            else:
+                topv, topi = output[0][1:].topk(1)
+                prediction_sequence = topi[:, :, 0].T
+
+                _, topi2 = output[1][1:].topk(1)
+                prediction2_sequence = topi2[:, :, 0].T
+
+                _, topi3 = output[2][1:].topk(1)
+                prediction3_sequence = topi3[:, :, 0].T
+
+                _, topi4 = output[3][1:].topk(1)
+                prediction4_sequence = topi4[:, :, 0].T
+
+
+                for pred_seq, sol_seq, que_seq, pred2, pred3, pred4 in zip(prediction_sequence, solution_sequence, question_sequence, prediction2_sequence, prediction3_sequence, prediction4_sequence):
+                    question = ''.join([input_itos[i] for i in que_seq])
+                    prediction = ''.join([output_itos[i] for i in pred_seq])
+                    solution = ''.join([output_itos[i] for i in sol_seq])
+
+                    prediction2 = ''.join([output_itos[i] for i in pred2])
+                    prediction3 = ''.join([output_itos[i] for i in pred3])
+                    prediction4 = ''.join([output_itos[i] for i in pred4])
+
+                    questions.append(question)
+                    predictions.append(prediction)
+                    solutions.append(solution)
+
+                    predictions_2.append(prediction2)
+                    predictions_3.append(prediction3)
+                    predictions_4.append(prediction4)
+
+                    if prediction == solution: score += 1
+
+                df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions, 'predictions2': predictions_2, 'predictions3': predictions_3,  'predictions4': predictions_4})
 
     print(f'FINAL SCORE: {score/len(questions)}')
-    df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions, 'distractor_1': dis1, 'distractor_2': dis2, 'distractor_3': dis3})
 
     return df, score/len(questions)
 
-def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size, encoder_hidden_size, decoder_hidden_size):
+def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size, encoder_hidden_size, decoder_hidden_size, char_offset):
     os.environ['CUDA_VISIBLE_DEVICES'] = device_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -387,7 +438,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         print(f'\tTrain Loss: {train_loss:.3f}')
         print(f'\t Val. Loss: {valid_loss:.3f}')
 
-    results, score = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi)
+    results, score = test(model=model, iterator=test_iterator, input_itos=SRC.vocab.itos, output_itos=TRG.vocab.itos, output_stoi=TRG.vocab.stoi, char_offset=char_offset)
 
     if not os.path.exists(os.path.join(RESULTS_DIR, exp_name.lower())): os.makedirs(os.path.join(RESULTS_DIR, exp_name.lower()))
 

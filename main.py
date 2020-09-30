@@ -19,6 +19,7 @@ parser.add_argument("--dh", default=2048, choices=[64, 128, 256, 512, 1024, 2048
 parser.add_argument("--q", default=q_list[0], choices=q_list, type=str, help="question type to train on")
 parser.add_argument("--exp", default=f"BENCHMARK", type=str, help="Experiment name for file storing results" )
 parser.add_argument("--bs", default=512, choices=[16, 32, 64, 128, 256, 512, 1024], type=int, help="batch size for training")
+parser.add_argument("--co", default=True, choices=[True, False], type=bool, help="char offsetting top 4 on/off")
 
 
 parser.add_argument("--v", default='char', choices=['char', 'word'], type=str, help="vectorization scheme to use (only applicable to random forest option)")
@@ -35,6 +36,7 @@ enc_hidden = args.eh
 dec_hidden = args.dh
 difficulty = args.d
 q_type = args.q
+char_offset = args.co
 
 v_scheme = args.v
 exp_name = args.exp
@@ -72,7 +74,8 @@ elif model=='gru':
                                                device_id=id,
                                                batch_size=batch_size,
                                                encoder_hidden_size=enc_hidden,
-                                               decoder_hidden_size=dec_hidden)
+                                               decoder_hidden_size=dec_hidden,
+                                               char_offset=char_offset)
 
 # elif model=='lstm':
 #     encoder_decoder_attentional_lstm_experiment(n_train=n_questions,

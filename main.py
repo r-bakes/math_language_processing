@@ -7,6 +7,7 @@ from parameters import q_list
 from definitions import RESULTS_DIR
 from architectures.random_forest import random_forest_experiment
 from architectures.encoder_decoder_attentional_gru import encoder_decoder_attentional_gru_experiment
+from architectures.encoder_decoder_attentional_lstm import encoder_decoder_attentional_lstm_experiment
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n", default=-1, type=int, help="Number of questions to train and test with")
@@ -73,3 +74,14 @@ elif model=='gru':
                                                batch_size=batch_size,
                                                encoder_hidden_size=enc_hidden,
                                                decoder_hidden_size=dec_hidden)
+
+elif model=='lstm':
+    encoder_decoder_attentional_lstm_experiment(n_train=n_questions,
+                                                q_type=q_type,
+                                                n_epochs=n_epochs,
+                                                exp_name=exp_name,
+                                                difficulty=difficulty,
+                                                device_id=id,
+                                                batch_size=batch_size,
+                                                encoder_hidden_size=enc_hidden,
+                                                decoder_hidden_size=dec_hidden)

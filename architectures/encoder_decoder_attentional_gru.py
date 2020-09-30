@@ -285,7 +285,8 @@ def test(model: nn.Module,
          output_stoi: dict):
 
     model.eval()
-    questions, solutions, predictions=[], [], []
+    questions, solutions, predictions =[], [], []
+    dis1, dis2, dis3 = [], [], []
     score=0
     with torch.no_grad():
 
@@ -296,24 +297,34 @@ def test(model: nn.Module,
 
             output = model(src=src, trg=None, output_stoi=output_stoi)  # turn off teacher forcing
 
-            topv, topi = output[1:].topk(1)
+            topv, topi = output[1:].topk(4)
             question_sequence = src.T
             prediction_sequence = topi[:,:,0].T
+            distractor_1, distractor_2, distractor_3 = topi[:,:,1].T, topi[:,:,2].T, topi[:,:,3].T
+
             solution_sequence = trg[1:].T
 
 
-            for pred_seq, sol_seq, que_seq in zip(prediction_sequence, solution_sequence, question_sequence):
+            for pred_seq, sol_seq, que_seq, dis_1, dis_2, dis_3 in zip(prediction_sequence, solution_sequence, question_sequence, distractor_1, distractor_2, distractor_3):
                 question = ''.join([input_itos[i] for i in que_seq])
                 prediction = ''.join([output_itos[i] for i in pred_seq])
                 solution = ''.join([output_itos[i] for i in sol_seq])
 
+                d1 = ''.join([output_itos[i] for i in dis_1])
+                d2 = ''.join([output_itos[i] for i in dis_2])
+                d3 = ''.join([output_itos[i] for i in dis_3])
+
                 questions.append(question)
                 predictions.append(prediction)
                 solutions.append(solution)
+
+                dis1.append(d1)
+                dis2.append(d2)
+                dis3.append(d3)
                 if prediction == solution: score += 1
 
     print(f'FINAL SCORE: {score/len(questions)}')
-    df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions})
+    df = pd.DataFrame(data={'questions': questions, 'solutions': solutions, 'predictions': predictions, 'distractor_1': dis1, 'distractor_2': dis2, 'distractor_3': dis3})
 
     return df, score/len(questions)
 
@@ -358,7 +369,7 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
     criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
 
     print(f'The model has {count_parameters(model):,} trainable parameters')
-    for epoch in range(n_epochs):
+    for epoch in range(1, n_epochs):
 
         start_time = time.time()
 
@@ -370,9 +381,9 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
         epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
         if epoch % 10 == 0:
-            print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s \t\t\t\t Question: {q_type[:-4]} | Experiment: {exp_name} | Est. Time Remaining: {round((n_epochs-epoch)*(end_time - start_time)/(60**2),2)}h')
+            print(f'Epoch: {epoch:02} | Time: {epoch_mins}m {epoch_secs}s \t\t\t\t Question: {q_type[:-4]} | Experiment: {exp_name} | Est. Time Remaining: {round((n_epochs-epoch)*(end_time - start_time)/(60**2),2)}h')
         else:
-            print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
+            print(f'Epoch: {epoch:02} | Time: {epoch_mins}m {epoch_secs}s')
         print(f'\tTrain Loss: {train_loss:.3f}')
         print(f'\t Val. Loss: {valid_loss:.3f}')
 

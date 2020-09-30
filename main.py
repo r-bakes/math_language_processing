@@ -7,7 +7,6 @@ from parameters import q_list
 from definitions import RESULTS_DIR
 from architectures.random_forest import random_forest_experiment
 from architectures.encoder_decoder_attentional_gru import encoder_decoder_attentional_gru_experiment
-from architectures.encoder_decoder_attentional_lstm import encoder_decoder_attentional_lstm_experiment
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n", default=-1, type=int, help="Number of questions to train and test with")

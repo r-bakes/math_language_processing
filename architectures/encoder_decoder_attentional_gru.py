@@ -18,7 +18,7 @@ import time
 import os
 
 from data import create_data_iterators, epoch_time
-from definitions import RESULTS_DIR
+from definitions import RESULTS_DIR, ROOT_DIR
 import parameters as p
 
 
@@ -215,8 +215,8 @@ class Seq2Seq(nn.Module):
 
             for outputs_i in range(0, offset):
                 output, hidden = self.decoder(output_init, hidden, encoder_outputs)
-                output = output.topk(offset)[1][0][outputs_i:outputs_i+1] # set up first char of sequence to be the i_th offset
-                outputs[outputs_i][1][0][output[0]] = 1  # manually set zero matrix to have first char in sequence of i_th prediction offset to 1
+                output = output.topk(offset)[1][0][outputs_i:outputs_i+1] # set up first char of sequence to be the i_th prediction offset
+                outputs[outputs_i][1][0][output[0]] = 1  # manually set zero matrix to have index of first char in sequence of i_th prediction offset to be 1
 
 
                 i = 2
@@ -379,7 +379,7 @@ def test(model: nn.Module,
 
     return df, score/len(questions)
 
-def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size, encoder_hidden_size, decoder_hidden_size, char_offset):
+def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_name, difficulty, device_id, batch_size, encoder_hidden_size, decoder_hidden_size, char_offset, save_model):
     os.environ['CUDA_VISIBLE_DEVICES'] = device_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -449,5 +449,8 @@ def encoder_decoder_attentional_gru_experiment(n_train, q_type, n_epochs, exp_na
             final_file.write(f'experiment: {exp_name} | q_type: {q_type} | score: {round(score, 4)} | model: ENCODER DECODER ATTENTIONAL GRU | n_train: {len(train_iterator.dataset)} | n_epochs: {n_epochs} | difficulty: {difficulty} | hours_training: {round((time.time() - start)/(60**2), 2)} | batch size: {batch_size} | optimizer: adam | criterion: cross entropy loss | enc hidden dim: {ENC_HID_DIM} | dec hidden dim: {DEC_HID_DIM} | attn dim: {ATTN_DIM}\n')
             final_file.write(result_file.read())
     os.rename(os.path.join(RESULTS_DIR, exp_name.lower(), f'copy_{exp_name}_{difficulty}_{q_type[:-4]}.tsv'), os.path.join(RESULTS_DIR, exp_name.lower(), f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.tsv'))
+
+    if save_model is True:
+        torch.save(model, os.path.join(ROOT_DIR, 'saved_models', f'{exp_name}_{difficulty}_{q_type[:-4]}_ENCODER_DECODER_ATTENTIONAL_GRU.pt'))
 
     print(f'{q_type[:-4]} EXPERIMENT CONCLUDED IN {round((time.time() - start)/(60**2), 2)} HOURS')

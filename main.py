@@ -17,10 +17,10 @@ parser.add_argument("--eh", default=2048, choices=[64, 128, 256, 512, 1024, 2048
 parser.add_argument("--dh", default=2048, choices=[64, 128, 256, 512, 1024, 2048], type=int, help="decoder hidden size")
 
 parser.add_argument("--q", default=q_list[0], choices=q_list, type=str, help="question type to train on")
-parser.add_argument("--exp", default=f"BENCHMARK", type=str, help="Experiment name for file storing results" )
+parser.add_argument("--exp", default=f"FULLSET", type=str, help="Experiment name for file storing results" )
 parser.add_argument("--bs", default=512, choices=[16, 32, 64, 128, 256, 512, 1024], type=int, help="batch size for training")
 parser.add_argument("--co", default=True, choices=[True, False], type=bool, help="char offsetting top 4 on/off")
-
+parser.add_argument("--sm", default=True, choices=[True, False], type=bool, help="save model pickle")
 
 parser.add_argument("--v", default='char', choices=['char', 'word'], type=str, help="vectorization scheme to use (only applicable to random forest option)")
 parser.add_argument("--id", default='1', choices=['0','1','2','3'], type=str, help="Cuda visible device id for use")
@@ -37,6 +37,7 @@ dec_hidden = args.dh
 difficulty = args.d
 q_type = args.q
 char_offset = args.co
+save_model = args.sm
 
 v_scheme = args.v
 exp_name = args.exp
@@ -75,7 +76,8 @@ elif model=='gru':
                                                batch_size=batch_size,
                                                encoder_hidden_size=enc_hidden,
                                                decoder_hidden_size=dec_hidden,
-                                               char_offset=char_offset)
+                                               char_offset=char_offset,
+                                               save_model=save_model)
 
 # elif model=='lstm':
 #     encoder_decoder_attentional_lstm_experiment(n_train=n_questions,

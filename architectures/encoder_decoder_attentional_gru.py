@@ -212,12 +212,13 @@ class Seq2Seq(nn.Module):
 
             # first input to the decoder is the <sos> token, generate first output char and select top k
             output_init = torch.full(size=(1, batch_size), fill_value=output_stoi['<SOS>'], dtype=int).to(self.device)[0]
+            output_init, hidden_init = self.decoder(output_init, hidden, encoder_outputs)
 
             for outputs_i in range(0, offset):
-                output, hidden = self.decoder(output_init, hidden, encoder_outputs)
-                output = output.topk(offset)[1][0][outputs_i:outputs_i+1] # set up first char of sequence to be the i_th prediction offset
-                outputs[outputs_i][1][0][output[0]] = 1  # manually set zero matrix to have index of first char in sequence of i_th prediction offset to be 1
 
+                output = output_init.topk(offset)[1][0][outputs_i:outputs_i+1] # set up first char of sequence to be the i_th prediction offset
+                hidden = hidden_init
+                outputs[outputs_i][1][0][output[0]] = 1  # manually set first step of prediction tensor to have index of desired offset char prediction
 
                 i = 2
                 while i < p.max_answer_length and output[0] != output_stoi['<EOS>']:

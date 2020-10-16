@@ -1,12 +1,9 @@
 from definitions import ROOT_DIR
-from data import create_data_iterators
 import torch
 import os
 from torchtext.data import Field, BucketIterator, Iterator, TabularDataset, Dataset
 from definitions import DATA_TSV_DIR
-
-
-
+from data import create_data_iterators
 
 
 # TESTING PARAMETERS

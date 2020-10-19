@@ -3,17 +3,23 @@ import torch.nn as nn
 from torchtext.data import BucketIterator
 
 import pandas as pd
+import argparse
 import os
 
 from data import create_data_iterators
 from torchtext.data import Field, BucketIterator, Iterator, TabularDataset, Dataset
 from definitions import ROOT_DIR
+from parameters import q_list
 
 
 # TESTING PARAMETERS
+parser = argparse.ArgumentParser()
+parser.add_argument("--q", default=q_list[0], choices=q_list, type=str, help="question type to train on")
+args = parser.parse_args()
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-q_type = 'algebra__linear_1d.tsv'
+q_type = args.q
 char_offset = True
 
 """

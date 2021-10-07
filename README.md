@@ -3,4 +3,4 @@ Penn State Undergraduate Thesis Work. Supplying attentional encoder decoder LSTM
 
 Related publications:
 - https://honors.libraries.psu.edu/catalog/6933rob5372
-- Bakes, Riley Owen, et al.  “Educational Data Mining 2021.” Journal of Educational Data Mining, Math Question Solvingand MCQ Distractor Generation with Attentional GRU Networks.
+- Bakes, Riley Owen, et al.  “Educational Data Mining 2021.” Journal of Educational Data Mining, Math Question Solving and MCQ Distractor Generation with Attentional GRU Networks.

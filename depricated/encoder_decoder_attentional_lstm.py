@@ -4,8 +4,8 @@ import os
 import datetime
 
 from depricated import data_preprocessing
+from src import parameters as p
 import definitions
-import parameters as p
 
 
 class EncoderDecoderLSTM:

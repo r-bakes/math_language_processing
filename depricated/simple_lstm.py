@@ -1,6 +1,6 @@
 import numpy as np
 from tensorflow import keras
-import parameters as p
+from src import parameters as p
 from depricated.data_preprocessing import Processor
 import os
 np.set_printoptions(threshold=np.inf)

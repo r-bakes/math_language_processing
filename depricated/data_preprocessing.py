@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
+from src import parameters as p
 import definitions
-import parameters as p
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import OneHotEncoder
 

@@ -4,8 +4,8 @@ import datetime
 from tensorflow import keras
 
 from depricated import data_preprocessing
+from src import parameters as p
 import definitions
-import parameters as p
 
 
 class Test:

@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 
-import parameters as p
+from src import parameters as p
 from depricated.data_preprocessing import Processor
 
 

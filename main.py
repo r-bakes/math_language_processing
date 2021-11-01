@@ -10,18 +10,6 @@ from src.architectures.encoder_decoder_attentional_gru.main import (
     encoder_decoder_attentional_gru_experiment,
 )
 
-random_forest_experiment(
-            experiment_name='debug',
-            train_set_size=None,
-            difficulty="easy",
-            question_type="algebra__linear_1d.tsv",
-            analyzer="char",
-            max_depth=6,
-            number_estimators=10,
-            save=True
-        )
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
